@@ -1,10 +1,3 @@
-/* =====================================================
-   LANDPAGE SIS — APP.JS
-   Router + all page renderers
-   Data zones = placeholder embed areas for Looker
-   Studio / Google App Script
-   ===================================================== */
-
 'use strict';
 
 // ── HELPERS ──────────────────────────────────────────
@@ -15,47 +8,43 @@ function icon(path, size = 16) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${path}</svg>`;
 }
 
-const ICONS = {
+const I = {
   alert:   '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
   info:    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
   check:   '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14 9 11"/>',
   embed:   '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
-  link:    '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
-  clock:   '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
   chevron: '<polyline points="6 9 12 15 18 9"/>',
   dl:      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
   plus:    '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
   mail:    '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
   phone:   '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 18v-.08z"/>',
+  video:   '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>',
+  book:    '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
 };
 
-// Generic embed zone builder
-function embedZone({ title, desc, snippet, tags = [], size = '', extraBtns = '' }) {
-  const tagHtml = tags.map(t => `<span class="badge b-teal">${t}</span>`).join('');
+function embedZone({ title, desc, tags = [], size = '' }) {
+  const tagHtml = tags.map(t => `<span class="badge b-blue">${t}</span>`).join('');
   return `
     <div class="embed-zone ${size}">
-      <div class="embed-icon">${icon(ICONS.embed, 52)}</div>
+      <div class="embed-icon">${icon(I.embed, 52)}</div>
       <div class="embed-title">${title}</div>
       <div class="embed-desc">${desc}</div>
-      ${snippet ? `<div class="embed-snippet">${snippet}</div>` : ''}
       ${tagHtml ? `<div class="embed-tags">${tagHtml}</div>` : ''}
-      ${extraBtns}
     </div>`;
 }
 
-// Alert banner builder
 function alertBanner(type, title, body) {
-  const map = { amber: ['a-amber', ICONS.alert], red: ['a-red', ICONS.alert], green: ['a-green', ICONS.check], blue: ['a-blue', ICONS.info] };
-  const [cls, ico] = map[type] || map.blue;
+  const map = { amber: 'a-amber', red: 'a-red', green: 'a-green', blue: 'a-blue' };
+  const icoMap = { amber: I.alert, red: I.alert, green: I.check, blue: I.info };
+  const colorMap = { amber: 'var(--amber)', red: 'var(--red)', green: 'var(--green)', blue: 'var(--accent)' };
   return `
-    <div class="alert ${cls}">
-      <div style="flex-shrink:0;margin-top:1px;color:var(--${type==='amber'?'amber':type==='red'?'red':type==='green'?'green':'blue'})">${icon(ico, 16)}</div>
+    <div class="alert ${map[type]}">
+      <div style="flex-shrink:0;margin-top:1px;color:${colorMap[type]}">${icon(icoMap[type], 16)}</div>
       <div><div class="alert-title">${title}</div><div class="alert-body">${body}</div></div>
     </div>`;
 }
 
-// Stat card builder
-function statCard(label, value, meta, color = 'teal') {
+function statCard(label, value, meta, color = 'blue') {
   return `
     <div class="stat-card sc-${color}">
       <div class="stat-label">${label}</div>
@@ -71,7 +60,7 @@ const PAGES = {
   students:     pageStudents,
   grades:       pageGrades,
   attendance:   pageAttendance,
-  pbis:         pagePBIS,
+  behavior:     pageBehavior,
   afterschool:  pageAfterSchool,
   staff:        pageStaff,
   analytics:    pageAnalytics,
@@ -80,61 +69,45 @@ const PAGES = {
   support:      pageSupport,
 };
 
-function navigate(pageKey) {
-  // Update nav
+function navigate(key) {
   document.querySelectorAll('.nav-link').forEach(el => {
-    el.classList.toggle('active', el.dataset.page === pageKey);
+    el.classList.toggle('active', el.dataset.page === key);
   });
-
-  // Render page
   const wrap = $('pageWrap');
   if (!wrap) return;
   wrap.style.animation = 'none';
   void wrap.offsetHeight;
   wrap.style.animation = 'pgIn 0.28s ease';
   wrap.innerHTML = '';
-  (PAGES[pageKey] || pageDashboard)(wrap);
-
-  // Wire any new data-page links inside the rendered page
-  wireNavLinks(wrap);
-
-  // Close sidebar on mobile
-  if (window.innerWidth < 900) closeSidebar();
-
-  // scroll to top
+  (PAGES[key] || pageDashboard)(wrap);
+  wire(wrap);
   wrap.parentElement.scrollTop = 0;
+  if (window.innerWidth < 900) closeSidebar();
 }
 
-function wireNavLinks(root) {
+function wire(root) {
   root.querySelectorAll('[data-page]').forEach(el => {
     el.addEventListener('click', e => { e.preventDefault(); navigate(el.dataset.page); });
   });
 }
 
-// ── BOOTSTRAP ────────────────────────────────────────
-
 document.addEventListener('DOMContentLoaded', () => {
-  // Date
   const d = new Date();
-  const topDate = $('topDate');
-  if (topDate) topDate.textContent = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+  const el = $('topDate');
+  if (el) el.textContent = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
 
-  // Sidebar nav
   document.querySelectorAll('.nav-link').forEach(el => {
     el.addEventListener('click', e => { e.preventDefault(); navigate(el.dataset.page); });
   });
 
-  // Hamburger
   const ham = $('hamburger');
-  const sidebar = $('sidebar');
   const overlay = $('overlay');
   if (ham) ham.addEventListener('click', () => {
-    sidebar.classList.toggle('open');
+    $('sidebar').classList.toggle('open');
     overlay.classList.toggle('show');
   });
   if (overlay) overlay.addEventListener('click', closeSidebar);
 
-  // Initial page
   navigate('dashboard');
 });
 
@@ -144,91 +117,80 @@ function closeSidebar() {
 }
 
 // =====================================================
-//  PAGE: DASHBOARD
+//  DASHBOARD
 // =====================================================
 function pageDashboard(c) {
   c.innerHTML = `
     <div class="pg-head">
       <div>
         <div class="pg-title">Campus Dashboard</div>
-        <div class="pg-sub">Lakewood Ridge High School &nbsp;·&nbsp; Campus ID: LRH-001</div>
+        <div class="pg-sub">Lakewood Ridge High School &nbsp;·&nbsp; Academic Year 2024–25</div>
       </div>
       <div class="pg-actions">
-        <button class="btn btn-ghost btn-sm">${icon(ICONS.dl, 14)} Export</button>
-        <button class="btn btn-primary btn-sm">${icon(ICONS.plus, 14)} Add Note</button>
+        <button class="btn btn-ghost btn-sm">${icon(I.dl, 14)} Export</button>
+        <button class="btn btn-primary btn-sm">${icon(I.plus, 14)} Add Note</button>
       </div>
     </div>
 
-    <!-- ALERTS -->
-    ${alertBanner('amber', 'Attendance Alert', 'Several students are below the 90% attendance threshold this week. Review the Attendance page for details.')}
-    ${alertBanner('blue',  'PBIS Quarterly Review — May 20', 'Prepare your Tier 1 & Tier 2 data summaries before the campus-wide PBIS team meeting.')}
+    ${alertBanner('amber', 'Attendance Alert', 'Several students are below the 90% attendance threshold this week. Review the Attendance page for a full list.')}
+    ${alertBanner('blue', 'Campus Review Meeting — May 20', 'Prepare your behavior and attendance summaries before the upcoming campus leadership team meeting.')}
 
-    <!-- KPI STRIP -->
-    <div class="section-label" style="margin-top:6px">Key Metrics — At a Glance</div>
+    <div class="section-label" style="margin-top:8px">Key Metrics — At a Glance</div>
     <div class="stat-row">
-      ${statCard('Total Enrollment',       '—',  'Add your live count here',    'teal')}
-      ${statCard('Avg. Attendance Rate',   '—%', 'Current week',                'green')}
-      ${statCard('Campus GPA',             '—',  'All students / all courses',  'blue')}
-      ${statCard('At-Risk Students',       '—',  'Below thresholds',            'amber')}
-      ${statCard('PBIS Points Awarded',    '—',  'This semester',               'purple')}
-      ${statCard('After-School Enrolled',  '—',  'Active programs',             'teal')}
+      ${statCard('Total Enrollment',      '—', 'Add your live count here',   'blue')}
+      ${statCard('Avg. Attendance Rate',  '—%','Current week',               'green')}
+      ${statCard('Campus GPA',            '—', 'All students / all courses', 'teal')}
+      ${statCard('Students Needing Support','—','Below set thresholds',      'amber')}
+      ${statCard('Recognition Awards',    '—', 'This semester',              'purple')}
+      ${statCard('After-School Enrolled', '—', 'Across all programs',        'teal')}
     </div>
 
-    <!-- TWO COLUMNS -->
     <div class="g2" style="margin-bottom:18px">
-
-      <!-- Attendance chart zone -->
       <div class="card">
         <div class="card-head">
           <div>
             <div class="card-title">Weekly Attendance</div>
-            <div class="card-sub">Embed your Looker Studio attendance chart below</div>
+            <div class="card-sub">Your connected attendance data will appear here</div>
           </div>
-          <span class="badge b-teal">Live</span>
+          <span class="badge b-green">Live</span>
         </div>
-        ${embedZone({ title:'Attendance Chart', desc:'Paste your Looker Studio or App Script chart embed code here.', snippet:'&lt;iframe src="YOUR_LOOKER_EMBED_URL" /&gt;', size:'short' })}
+        ${embedZone({ title:'Attendance Chart', desc:'Your attendance data will display here once connected by your Nexaflow setup team.', size:'short' })}
       </div>
 
-      <!-- Grade distribution zone -->
       <div class="card">
         <div class="card-head">
           <div>
             <div class="card-title">Grade Distribution</div>
-            <div class="card-sub">Embed your grade breakdown widget here</div>
+            <div class="card-sub">Current semester grade breakdown</div>
           </div>
           <span class="badge b-blue">Sem. 2</span>
         </div>
-        ${embedZone({ title:'Grade Chart', desc:'Connect your grading data source and embed a distribution chart here.', snippet:'&lt;iframe src="YOUR_GRADES_EMBED_URL" /&gt;', size:'short' })}
+        ${embedZone({ title:'Grade Chart', desc:'Your grade distribution chart will display here once your data source is connected.', size:'short' })}
       </div>
-
     </div>
 
-    <!-- Two more columns -->
     <div class="g2">
-
-      <!-- Recent activity -->
       <div class="card">
         <div class="card-head">
           <div class="card-title">Recent Activity Log</div>
-          <span class="badge b-blue">Auto-updates</span>
+          <span class="badge b-blue">Auto-updated</span>
         </div>
-        ${embedZone({ title:'Activity Feed', desc:'Connect your Google App Script log here to display timestamped campus activity.', snippet:'&lt;script src="YOUR_GAS_URL"&gt;&lt;/script&gt;', size:'short' })}
+        ${embedZone({ title:'Activity Feed', desc:'Recent campus activity — referrals, recognitions, enrollments, and sign-ins — will appear here automatically.', size:'short' })}
       </div>
 
-      <!-- Quick links -->
       <div class="card">
         <div class="card-head"><div class="card-title">Quick Navigation</div></div>
         <div class="card-body">
           ${[
-            ['students',    'b-teal',   'Student Roster',        'Search and filter all enrolled students'],
-            ['attendance',  'b-green',  'Attendance',            'Daily and weekly attendance tracking'],
-            ['grades',      'b-blue',   'Grades & GPA',          'Course-level grade summaries'],
-            ['pbis',        'b-purple', 'PBIS & Discipline',     'Behavior referrals and recognitions'],
-            ['afterschool', 'b-amber',  'After-School Programs', 'Program rosters and sign-in'],
-            ['analytics',   'b-teal',   'Analytics & Reports',   'Export and drill-down reports'],
+            ['students',    'b-blue',   'Student Roster',          'Search and manage all enrolled students'],
+            ['attendance',  'b-green',  'Attendance',              'Daily and weekly attendance tracking'],
+            ['grades',      'b-teal',   'Grades & GPA',            'Course-level grade summaries'],
+            ['behavior',    'b-purple', 'Behavior & Conduct',      'Referrals, recognitions, and conduct logs'],
+            ['afterschool', 'b-amber',  'After-School Programs',   'Program rosters and daily sign-in'],
+            ['analytics',   'b-blue',   'Analytics & Reports',     'Full reports and data summaries'],
           ].map(([page, badge, label, desc]) => `
-            <a href="#" data-page="${page}" style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);text-decoration:none">
-              <span class="badge ${badge}" style="min-width:8px;width:8px;height:8px;border-radius:50%;padding:0"></span>
+            <a href="#" data-page="${page}" style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)">
+              <span style="width:8px;height:8px;border-radius:50%;background:currentColor" class="${badge}"></span>
               <div style="flex:1">
                 <div style="font-weight:600;font-size:0.845rem;color:var(--text-hi)">${label}</div>
                 <div style="font-size:0.75rem;color:var(--text-lo);margin-top:2px">${desc}</div>
@@ -238,13 +200,12 @@ function pageDashboard(c) {
           `).join('')}
         </div>
       </div>
-
     </div>
   `;
 }
 
 // =====================================================
-//  PAGE: STUDENT ROSTER
+//  STUDENT ROSTER
 // =====================================================
 function pageStudents(c) {
   c.innerHTML = `
@@ -254,41 +215,45 @@ function pageStudents(c) {
         <div class="pg-sub">Search, filter, and manage all enrolled students</div>
       </div>
       <div class="pg-actions">
-        <button class="btn btn-ghost btn-sm">${icon(ICONS.dl, 14)} Export CSV</button>
-        <button class="btn btn-primary btn-sm">${icon(ICONS.plus, 14)} Add Student</button>
+        <button class="btn btn-ghost btn-sm">${icon(I.dl, 14)} Export List</button>
+        <button class="btn btn-primary btn-sm">${icon(I.plus, 14)} Add Student</button>
       </div>
     </div>
 
-    <!-- FILTERS -->
     <div class="card" style="margin-bottom:18px">
       <div class="card-body">
         <div class="search-row">
           <div class="search-field">
             ${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>', 15)}
-            <input type="text" placeholder="Search by name or student ID…" />
+            <input type="text" placeholder="Search by student name or ID…" />
           </div>
           <select class="sel"><option>All Grades</option><option>Grade 9</option><option>Grade 10</option><option>Grade 11</option><option>Grade 12</option></select>
-          <select class="sel"><option>All Status</option><option>Active</option><option>At Risk</option><option>Watch</option></select>
+          <select class="sel"><option>All Status</option><option>Active</option><option>At Risk</option><option>Watch List</option></select>
           <select class="sel"><option>All Counselors</option></select>
-          <button class="btn btn-ghost btn-sm">Reset</button>
+          <button class="btn btn-ghost btn-sm">Reset Filters</button>
         </div>
       </div>
     </div>
 
-    <!-- STUDENT DATA ZONE -->
+    <div class="stat-row">
+      ${statCard('Total Students',       '—', 'Currently enrolled',        'blue')}
+      ${statCard('Active',               '—', 'In good standing',          'green')}
+      ${statCard('On Watch List',        '—', 'Needs monitoring',          'amber')}
+      ${statCard('Special Services',     '—', 'IEP / 504 / ELL',          'purple')}
+    </div>
+
     <div class="card">
       <div class="card-head">
         <div>
           <div class="card-title">Student Records</div>
-          <div class="card-sub">Connected to your student information system</div>
+          <div class="card-sub">All enrolled students — updated by your connected data source</div>
         </div>
         <span class="badge b-teal">Live Data</span>
       </div>
       ${embedZone({
-        title: 'Student Roster Table',
-        desc: 'Embed your Google App Script student search table here. This zone will display name, grade, GPA, attendance %, counselor, and IEP/ELL flags pulled from your data source.',
-        snippet: '&lt;iframe src="YOUR_GAS_STUDENT_TABLE_URL" width="100%" height="500" /&gt;',
-        tags: ['Name', 'Grade', 'GPA', 'Attendance %', 'Counselor', 'IEP', 'ELL', 'Status'],
+        title: 'Student Directory Table',
+        desc: 'Your student roster will display here — including name, grade level, GPA, attendance percentage, assigned counselor, and support service flags.',
+        tags: ['Name', 'Grade', 'GPA', 'Attendance %', 'Counselor', 'Special Services', 'Status'],
         size: 'tall',
       })}
     </div>
@@ -296,109 +261,101 @@ function pageStudents(c) {
 }
 
 // =====================================================
-//  PAGE: GRADES & GPA
+//  GRADES & GPA
 // =====================================================
 function pageGrades(c) {
   c.innerHTML = `
     <div class="pg-head">
       <div>
         <div class="pg-title">Grades & GPA</div>
-        <div class="pg-sub">Course averages, grade distribution, and GPA trends</div>
+        <div class="pg-sub">Course averages, grade distribution, and academic performance trends</div>
       </div>
       <div class="pg-actions">
-        <button class="btn btn-ghost btn-sm">${icon(ICONS.dl, 14)} Export</button>
+        <button class="btn btn-ghost btn-sm">${icon(I.dl, 14)} Export</button>
       </div>
     </div>
 
-    <!-- KPI row -->
     <div class="stat-row">
-      ${statCard('Campus GPA',       '—', 'All courses, current sem.',  'blue')}
-      ${statCard('Students w/ A/B',  '—%','Honor roll threshold',       'green')}
-      ${statCard('Students Below 70','—', 'Failing one or more courses','red')}
-      ${statCard('GPA Trend',        '—', 'vs. last semester',          'teal')}
+      ${statCard('Campus GPA',            '—', 'All courses, current semester', 'blue')}
+      ${statCard('Students with A or B',  '—%','Meeting or exceeding standard', 'green')}
+      ${statCard('Students Below 70',     '—', 'Failing one or more courses',   'red')}
+      ${statCard('GPA Trend',             '—', 'Compared to last semester',     'teal')}
     </div>
 
-    <!-- Grade summary embed -->
     <div class="g2" style="margin-bottom:18px">
       <div class="card">
         <div class="card-head">
           <div class="card-title">Course Grade Summary</div>
           <span class="badge b-blue">By Department</span>
         </div>
-        ${embedZone({ title:'Grade Summary Table', desc:'Embed your Looker Studio or App Script course-level grade summary. Columns: course name, teacher, avg grade, A/B/C/D/F counts, trend.', snippet:'&lt;iframe src="YOUR_GRADES_SUMMARY_URL" /&gt;', size:'short' })}
+        ${embedZone({ title:'Grade Summary Table', desc:'A course-by-course grade summary will appear here, showing average grades, grade counts, and trends by teacher and department.', size:'short' })}
       </div>
-
       <div class="card">
         <div class="card-head">
-          <div class="card-title">GPA Distribution Chart</div>
-          <span class="badge b-green">Visual</span>
+          <div class="card-title">GPA Distribution</div>
+          <span class="badge b-green">Campus-Wide</span>
         </div>
-        ${embedZone({ title:'GPA Distribution', desc:'Drop in your Looker Studio histogram or donut chart showing GPA ranges across the campus.', snippet:'&lt;iframe src="YOUR_GPA_CHART_URL" /&gt;', size:'short' })}
+        ${embedZone({ title:'GPA Distribution Chart', desc:'A visual breakdown of GPA ranges across all students will display here — from honor roll to students needing academic support.', size:'short' })}
       </div>
     </div>
 
-    <!-- Honor roll zone -->
     <div class="card">
       <div class="card-head">
-        <div class="card-title">Honor Roll & At-Risk Academic List</div>
+        <div class="card-title">Honor Roll & Academic Watch List</div>
         <span class="badge b-teal">Live</span>
       </div>
-      ${embedZone({ title:'Student GPA List', desc:'Embed your filtered student GPA list here. Toggle between honor roll (GPA ≥ 3.7) and academic watch (GPA < 2.0) views.', snippet:'&lt;iframe src="YOUR_GPA_LIST_URL" /&gt;', tags:['Student Name','GPA','Grade','Course Count','Teacher'], size:'short' })}
+      ${embedZone({ title:'Student Academic Standing List', desc:'Students on the honor roll and those needing academic intervention will be listed here, filterable by grade level and GPA range.', tags:['Student Name','GPA','Grade','Courses','Teacher'], size:'short' })}
     </div>
   `;
 }
 
 // =====================================================
-//  PAGE: ATTENDANCE
+//  ATTENDANCE
 // =====================================================
 function pageAttendance(c) {
   c.innerHTML = `
     <div class="pg-head">
       <div>
         <div class="pg-title">Attendance</div>
-        <div class="pg-sub">Daily, weekly, and monthly attendance tracking by campus, grade, and student</div>
+        <div class="pg-sub">Daily, weekly, and semester attendance tracking by campus and student</div>
       </div>
       <div class="pg-actions">
-        <button class="btn btn-ghost btn-sm">${icon(ICONS.dl, 14)} Export Report</button>
+        <button class="btn btn-ghost btn-sm">${icon(I.dl, 14)} Export Report</button>
       </div>
     </div>
 
-    ${alertBanner('amber', 'Chronic Absenteeism Watch', 'Students with less than 90% attendance require counselor outreach per district policy. Use the attendance list below to identify them.')}
+    ${alertBanner('amber', 'Chronic Absenteeism Watch', 'Students with less than 90% attendance may require outreach from your campus counseling team. Use the list below to identify those students.')}
 
-    <!-- KPI row -->
     <div class="stat-row">
-      ${statCard('Today\'s Attendance', '—%', 'As of this morning',         'green')}
-      ${statCard('Weekly Avg',          '—%', 'Mon–Fri this week',          'teal')}
-      ${statCard('Chronic Absent.',     '—',  'Below 90% this semester',    'amber')}
-      ${statCard('Unexcused Absences',  '—',  'This week',                  'red')}
-      ${statCard('Tardies',             '—',  'This week',                  'blue')}
+      ${statCard('Today\'s Attendance',   '—%','As of this morning',         'green')}
+      ${statCard('Weekly Average',        '—%','Mon – Fri this week',        'teal')}
+      ${statCard('Chronically Absent',    '—', 'Below 90% this semester',    'amber')}
+      ${statCard('Unexcused Absences',    '—', 'This week',                  'red')}
+      ${statCard('Tardies',               '—', 'This week',                  'blue')}
     </div>
 
-    <!-- Charts -->
     <div class="g2" style="margin-bottom:18px">
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Daily Attendance Chart</div>
+          <div class="card-title">Daily Attendance</div>
           <span class="badge b-teal">This Week</span>
         </div>
-        ${embedZone({ title:'Daily Attendance', desc:'Embed your Looker Studio daily attendance bar or line chart. Shows present vs. absent vs. tardy by day.', snippet:'&lt;iframe src="YOUR_DAILY_ATTEND_URL" /&gt;', size:'short' })}
+        ${embedZone({ title:'Daily Attendance Chart', desc:'A daily breakdown of present, absent, and tardy counts for the current week will display here.', size:'short' })}
       </div>
-
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Monthly Trend</div>
-          <span class="badge b-blue">Aug – Jun</span>
+          <div class="card-title">Attendance Trend</div>
+          <span class="badge b-blue">Full Year</span>
         </div>
-        ${embedZone({ title:'Monthly Trend Chart', desc:'Embed your monthly attendance trend line chart (full academic year) from Looker Studio or App Script.', snippet:'&lt;iframe src="YOUR_MONTHLY_TREND_URL" /&gt;', size:'short' })}
+        ${embedZone({ title:'Monthly Trend Chart', desc:'A month-by-month attendance trend for the full academic year will display here.', size:'short' })}
       </div>
     </div>
 
-    <!-- Student attendance list -->
     <div class="card">
       <div class="card-head">
         <div>
           <div class="card-title">Student Attendance Records</div>
-          <div class="card-sub">Individual-level attendance data</div>
+          <div class="card-sub">Individual attendance data for all enrolled students</div>
         </div>
         <span class="badge b-green">Live</span>
       </div>
@@ -406,69 +363,64 @@ function pageAttendance(c) {
         <div class="search-row">
           <div class="search-field">
             ${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>', 15)}
-            <input type="text" placeholder="Search student…" />
+            <input type="text" placeholder="Search student name…" />
           </div>
           <select class="sel"><option>All Grades</option><option>Grade 9</option><option>Grade 10</option><option>Grade 11</option><option>Grade 12</option></select>
           <select class="sel"><option>All Status</option><option>On Track (≥95%)</option><option>Monitor (90–94%)</option><option>At Risk (&lt;90%)</option></select>
         </div>
       </div>
-      ${embedZone({ title:'Attendance Table', desc:'Embed your student attendance data table here. Columns: Student Name, Grade, Present Days, Absent Days, Tardy, % Attendance, Status.', snippet:'&lt;iframe src="YOUR_ATTEND_TABLE_URL" width="100%" height="480" /&gt;', tags:['Name','Grade','Present','Absent','Tardy','%','Status'] })}
+      ${embedZone({ title:'Attendance Table', desc:'Student-by-student attendance records will appear here — showing days present, days absent, tardies, and overall percentage.', tags:['Name','Grade','Present','Absent','Tardy','% Attendance','Status'] })}
     </div>
   `;
 }
 
 // =====================================================
-//  PAGE: PBIS & DISCIPLINE
+//  BEHAVIOR & CONDUCT  (formerly PBIS)
 // =====================================================
-function pagePBIS(c) {
+function pageBehavior(c) {
   c.innerHTML = `
     <div class="pg-head">
       <div>
-        <div class="pg-title">PBIS & Discipline</div>
-        <div class="pg-sub">Positive behavior recognitions and discipline referral tracking</div>
+        <div class="pg-title">Behavior & Conduct</div>
+        <div class="pg-sub">Student recognitions, conduct referrals, and behavioral trend tracking</div>
       </div>
       <div class="pg-actions">
-        <button class="btn btn-ghost btn-sm">${icon(ICONS.dl, 14)} Export Log</button>
-        <button class="btn btn-primary btn-sm">${icon(ICONS.plus, 14)} New Entry</button>
+        <button class="btn btn-ghost btn-sm">${icon(I.dl, 14)} Export Log</button>
+        <button class="btn btn-primary btn-sm">${icon(I.plus, 14)} New Entry</button>
       </div>
     </div>
 
-    <!-- KPI row -->
     <div class="stat-row">
-      ${statCard('PBIS Points Awarded', '—', 'This semester',            'green')}
-      ${statCard('Recognitions',        '—', 'Positive behavior logs',   'teal')}
-      ${statCard('Referrals Filed',     '—', 'This semester',            'amber')}
-      ${statCard('Pending Resolution',  '—', 'Open referrals',           'red')}
-      ${statCard('ISS Days',            '—', 'In-school suspension',     'blue')}
-      ${statCard('Parent Contacts',     '—', 'Logged this semester',     'purple')}
+      ${statCard('Recognitions Awarded',  '—', 'Positive behavior this semester', 'green')}
+      ${statCard('Referrals Filed',       '—', 'This semester',                   'amber')}
+      ${statCard('Pending Resolution',    '—', 'Open referrals',                  'red')}
+      ${statCard('In-School Support',     '—', 'ISS / interventions assigned',    'blue')}
+      ${statCard('Parent Contacts',       '—', 'Logged this semester',            'teal')}
+      ${statCard('Repeat Referrals',      '—', 'Same student, 3+ incidents',      'purple')}
     </div>
 
     <div class="g2" style="margin-bottom:18px">
-      <!-- Referral categories chart -->
       <div class="card">
         <div class="card-head">
           <div class="card-title">Referral Categories</div>
           <span class="badge b-amber">This Semester</span>
         </div>
-        ${embedZone({ title:'Referral Breakdown Chart', desc:'Embed a Looker Studio chart showing referrals by category — disruption, tardy, cell phone, dress code, etc.', snippet:'&lt;iframe src="YOUR_REFERRAL_CHART_URL" /&gt;', size:'short' })}
+        ${embedZone({ title:'Referral Breakdown Chart', desc:'A breakdown of referral types — disruption, tardiness, dress code, device use, etc. — will appear here as a chart.', size:'short' })}
       </div>
-
-      <!-- PBIS trend -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">PBIS Points Trend</div>
+          <div class="card-title">Recognition Trend</div>
           <span class="badge b-green">Monthly</span>
         </div>
-        ${embedZone({ title:'PBIS Points Chart', desc:'Embed your monthly PBIS recognition points trend line from Looker Studio or Google Sheets.', snippet:'&lt;iframe src="YOUR_PBIS_TREND_URL" /&gt;', size:'short' })}
+        ${embedZone({ title:'Recognition Trend Chart', desc:'Monthly positive recognition totals will display here as a trend line — great for sharing in campus leadership meetings.', size:'short' })}
       </div>
     </div>
 
-    <!-- Discipline log -->
     <div class="card">
       <div class="card-head">
         <div>
-          <div class="card-title">Discipline & Recognition Log</div>
-          <div class="card-sub">All referrals and positive behavior entries</div>
+          <div class="card-title">Conduct & Recognition Log</div>
+          <div class="card-sub">All referral and recognition entries for this campus</div>
         </div>
         <span class="badge b-teal">Live</span>
       </div>
@@ -476,56 +428,53 @@ function pagePBIS(c) {
         <div class="search-row">
           <div class="search-field">
             ${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>', 15)}
-            <input type="text" placeholder="Search student or staff…" />
+            <input type="text" placeholder="Search student or staff name…" />
           </div>
-          <select class="sel"><option>All Types</option><option>Referral</option><option>Recognition</option></select>
+          <select class="sel"><option>All Entry Types</option><option>Referral</option><option>Recognition</option></select>
           <select class="sel"><option>All Status</option><option>Pending</option><option>Resolved</option><option>Logged</option></select>
         </div>
       </div>
-      ${embedZone({ title:'PBIS Log Table', desc:'Embed your App Script or Looker Studio behavior log table. Columns: Student, Type, Category, Reported By, Date, Status, Action Taken.', snippet:'&lt;iframe src="YOUR_PBIS_LOG_URL" width="100%" height="480" /&gt;', tags:['Student','Type','Category','Date','Status','Action'] })}
+      ${embedZone({ title:'Conduct Log Table', desc:'All conduct referrals and positive recognitions will be listed here — filterable by type, date, status, and staff member.', tags:['Student','Entry Type','Category','Reported By','Date','Status','Action Taken'] })}
     </div>
   `;
 }
 
 // =====================================================
-//  PAGE: AFTER-SCHOOL PROGRAMS
+//  AFTER-SCHOOL PROGRAMS
 // =====================================================
 function pageAfterSchool(c) {
   c.innerHTML = `
     <div class="pg-head">
       <div>
         <div class="pg-title">After-School Programs</div>
-        <div class="pg-sub">Program rosters, attendance sign-in, and enrollment overview</div>
+        <div class="pg-sub">Program rosters, daily attendance sign-in, and enrollment overview</div>
       </div>
       <div class="pg-actions">
-        <button class="btn btn-ghost btn-sm">${icon(ICONS.dl, 14)} Export</button>
-        <button class="btn btn-primary btn-sm">${icon(ICONS.plus, 14)} Add Program</button>
+        <button class="btn btn-ghost btn-sm">${icon(I.dl, 14)} Export</button>
+        <button class="btn btn-primary btn-sm">${icon(I.plus, 14)} Add Program</button>
       </div>
     </div>
 
-    <!-- KPI row -->
     <div class="stat-row">
-      ${statCard('Active Programs',     '—', 'Running this semester',     'teal')}
-      ${statCard('Total Enrolled',      '—', 'Across all programs',       'blue')}
-      ${statCard('Sign-Ins Today',      '—', 'As of 5:00 PM',            'green')}
-      ${statCard('Avg. Participation',  '—%','Daily show rate',           'amber')}
+      ${statCard('Active Programs',       '—', 'Running this semester',   'teal')}
+      ${statCard('Total Enrolled',        '—', 'Across all programs',     'blue')}
+      ${statCard('Sign-Ins Today',        '—', 'As of close of day',      'green')}
+      ${statCard('Avg. Daily Attendance', '—%','Participation rate',      'amber')}
     </div>
 
-    <!-- Program cards zone -->
     <div class="card" style="margin-bottom:18px">
       <div class="card-head">
         <div class="card-title">Program Directory</div>
-        <span class="badge b-teal">Active Programs</span>
+        <span class="badge b-teal">All Active Programs</span>
       </div>
-      ${embedZone({ title:'Program List', desc:'Embed your App Script or Looker Studio program directory here. Each card will show: program name, advisor, days/times, room, and enrollment count.', snippet:'&lt;iframe src="YOUR_PROGRAMS_URL" width="100%" height="360" /&gt;', tags:['Program Name','Advisor','Days','Time','Room','Enrolled'], size:'short' })}
+      ${embedZone({ title:'Program Cards', desc:'All active after-school programs will be listed here — showing program name, staff advisor, meeting days, time, location, and current enrollment.', tags:['Program Name','Advisor','Days','Time','Room','Enrolled'], size:'short' })}
     </div>
 
-    <!-- Sign-in log -->
     <div class="card">
       <div class="card-head">
         <div>
-          <div class="card-title">After-School Sign-In Log</div>
-          <div class="card-sub">Daily student check-in records</div>
+          <div class="card-title">Daily Sign-In Log</div>
+          <div class="card-sub">Student check-in and check-out records by program</div>
         </div>
         <span class="badge b-green">Live</span>
       </div>
@@ -538,13 +487,13 @@ function pageAfterSchool(c) {
           <select class="sel"><option>All Programs</option></select>
         </div>
       </div>
-      ${embedZone({ title:'Sign-In Table', desc:'Embed your Google App Script after-school sign-in form results and attendance table here. Columns: Student, Program, Date, Sign-In Time, Sign-Out Time, Staff.', snippet:'&lt;iframe src="YOUR_SIGNIN_LOG_URL" width="100%" height="480" /&gt;', tags:['Student','Program','Date','Sign-In','Sign-Out','Staff'] })}
+      ${embedZone({ title:'Sign-In Table', desc:'Daily sign-in and sign-out records for all after-school programs will appear here — filterable by program, date, and student.', tags:['Student','Program','Date','Sign-In','Sign-Out','Supervising Staff'] })}
     </div>
   `;
 }
 
 // =====================================================
-//  PAGE: STAFF DIRECTORY
+//  STAFF DIRECTORY
 // =====================================================
 function pageStaff(c) {
   c.innerHTML = `
@@ -554,12 +503,18 @@ function pageStaff(c) {
         <div class="pg-sub">All campus staff, roles, departments, and contact information</div>
       </div>
       <div class="pg-actions">
-        <button class="btn btn-ghost btn-sm">${icon(ICONS.dl, 14)} Export</button>
-        <button class="btn btn-primary btn-sm">${icon(ICONS.plus, 14)} Add Staff</button>
+        <button class="btn btn-ghost btn-sm">${icon(I.dl, 14)} Export</button>
+        <button class="btn btn-primary btn-sm">${icon(I.plus, 14)} Add Staff</button>
       </div>
     </div>
 
-    <!-- Filters -->
+    <div class="stat-row">
+      ${statCard('Total Staff',      '—', 'All roles and departments',     'blue')}
+      ${statCard('Teachers',         '—', 'Classroom instructors',         'green')}
+      ${statCard('Support Staff',    '—', 'Counselors, aides, specialists','teal')}
+      ${statCard('Administration',   '—', 'Admin and leadership team',     'purple')}
+    </div>
+
     <div class="card" style="margin-bottom:18px">
       <div class="card-body">
         <div class="search-row">
@@ -567,102 +522,98 @@ function pageStaff(c) {
             ${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>', 15)}
             <input type="text" placeholder="Search by name or role…" />
           </div>
-          <select class="sel"><option>All Departments</option><option>Administration</option><option>Counseling</option><option>English</option><option>Mathematics</option><option>Science</option><option>Special Ed.</option></select>
-          <button class="btn btn-ghost btn-sm">Reset</button>
+          <select class="sel"><option>All Departments</option><option>Administration</option><option>Counseling</option><option>English / ELA</option><option>Mathematics</option><option>Science</option><option>Social Studies</option><option>Special Education</option><option>Physical Education</option></select>
+          <button class="btn btn-ghost btn-sm">Reset Filters</button>
         </div>
       </div>
     </div>
 
-    <!-- Staff table zone -->
     <div class="card">
       <div class="card-head">
         <div>
           <div class="card-title">Staff Records</div>
-          <div class="card-sub">Connected to your HR / staff directory</div>
+          <div class="card-sub">All staff members connected to your campus directory</div>
         </div>
         <span class="badge b-teal">Live Data</span>
       </div>
-      ${embedZone({ title:'Staff Directory Table', desc:'Embed your Google App Script or Sheets-backed staff directory here. Columns: Name, Role, Department, Email, Extension, Certification. Click a row to view the staff profile.', snippet:'&lt;iframe src="YOUR_STAFF_TABLE_URL" width="100%" height="520" /&gt;', tags:['Name','Role','Department','Email','Extension','Cert.'], size:'tall' })}
+      ${embedZone({ title:'Staff Directory Table', desc:'Your full staff directory will display here — including name, role, department, email address, and phone extension.', tags:['Name','Role','Department','Email','Extension'], size:'tall' })}
     </div>
   `;
 }
 
 // =====================================================
-//  PAGE: ANALYTICS & REPORTS
+//  ANALYTICS & REPORTS
 // =====================================================
 function pageAnalytics(c) {
   c.innerHTML = `
     <div class="pg-head">
       <div>
         <div class="pg-title">Analytics & Reports</div>
-        <div class="pg-sub">Comprehensive campus-wide dashboards and downloadable reports</div>
+        <div class="pg-sub">Campus-wide dashboards and downloadable reports for leadership review</div>
       </div>
       <div class="pg-actions">
-        <button class="btn btn-ghost btn-sm">${icon(ICONS.dl, 14)} Download PDF</button>
+        <button class="btn btn-ghost btn-sm">${icon(I.dl, 14)} Download PDF</button>
       </div>
     </div>
 
-    ${alertBanner('blue', 'Connect Your Data Source', 'Replace the placeholder zones below with your Looker Studio report embed URLs or Google App Script web app outputs.')}
+    ${alertBanner('blue', 'Your reports will appear here', 'Once your campus data is connected by the Nexaflow setup team, full interactive reports will display in each panel below.')}
 
-    <!-- Main analytics embed -->
     <div class="card" style="margin-bottom:18px">
       <div class="card-head">
         <div>
-          <div class="card-title">Campus Analytics Dashboard</div>
-          <div class="card-sub">Full-page Looker Studio report embed</div>
+          <div class="card-title">Main Campus Analytics Dashboard</div>
+          <div class="card-sub">Full interactive report — attendance, grades, behavior, and enrollment in one view</div>
         </div>
-        <a href="#" class="btn btn-ghost btn-sm">Open in Looker Studio ↗</a>
       </div>
-      ${embedZone({ title:'Main Analytics Report', desc:'Paste your Looker Studio full-page dashboard embed code here. This is your primary data canvas for principals and district admins. Recommended size: 100% width × 700px height.', snippet:'&lt;iframe src="https://lookerstudio.google.com/embed/reporting/YOUR_REPORT_ID/page/PAGE_ID" width="100%" height="700" allowfullscreen /&gt;', size:'tall' })}
+      ${embedZone({ title:'Main Analytics Report', desc:'Your primary campus analytics dashboard will display here. This is the main report used for principal walkthroughs, district check-ins, and board presentations.', size:'tall' })}
     </div>
 
-    <!-- Sub-reports row -->
     <div class="section-label">Individual Report Panels</div>
     <div class="g3">
       <div class="card">
         <div class="card-head"><div class="card-title">Attendance Report</div></div>
-        ${embedZone({ title:'Attendance Panel', desc:'Embed your attendance summary mini-report here.', snippet:'&lt;iframe src="YOUR_ATTEND_REPORT" /&gt;', size:'short' })}
+        ${embedZone({ title:'Attendance Panel', desc:'Attendance summary report will display here.', size:'short' })}
       </div>
       <div class="card">
-        <div class="card-head"><div class="card-title">Discipline Report</div></div>
-        ${embedZone({ title:'Discipline Panel', desc:'Embed your PBIS / referral summary here.', snippet:'&lt;iframe src="YOUR_PBIS_REPORT" /&gt;', size:'short' })}
+        <div class="card-head"><div class="card-title">Conduct Report</div></div>
+        ${embedZone({ title:'Conduct Panel', desc:'Behavior and referral summary will display here.', size:'short' })}
       </div>
       <div class="card">
         <div class="card-head"><div class="card-title">Academic Report</div></div>
-        ${embedZone({ title:'Academic Panel', desc:'Embed your GPA / grade summary mini-report here.', snippet:'&lt;iframe src="YOUR_ACADEMIC_REPORT" /&gt;', size:'short' })}
+        ${embedZone({ title:'Academic Panel', desc:'GPA and grade summary will display here.', size:'short' })}
       </div>
     </div>
   `;
 }
 
 // =====================================================
-//  PAGE: DATA INTEGRATIONS
+//  CONNECTED DATA SOURCES  (formerly "Integrations")
 // =====================================================
 function pageIntegrations(c) {
   const tools = [
-    { name:'Looker Studio', tag:'LS', color:'#4285F4', bg:'#e8f0fe', desc:'Embed full-page or panel reports directly into any page. Copy the report\'s share link → Embed → paste the iframe code.', status:'Ready to connect', badge:'b-blue' },
-    { name:'Google Sheets', tag:'GS', color:'#34A853', bg:'#e6f4ea', desc:'Power tables and charts using Google Sheets as your backend. Use the Publish → Embed Sheet option.', status:'Ready to connect', badge:'b-green' },
-    { name:'Google App Script', tag:'GAS', color:'#F9AB00', bg:'#fef7e0', desc:'Run server-side scripts to create custom web apps, form handlers, and automated reports embedded here.', status:'Ready to connect', badge:'b-amber' },
-    { name:'Google Forms', tag:'GF', color:'#673AB7', bg:'#ede7f6', desc:'Embed Google Forms for after-school sign-in, parent feedback, or staff surveys directly into any page.', status:'Ready to connect', badge:'b-purple' },
-    { name:'Google Classroom', tag:'GC', color:'#0F9D58', bg:'#e6f4ea', desc:'Link or embed Google Classroom course streams and grade summaries for teachers and admins.', status:'Future integration', badge:'b-teal' },
-    { name:'PEIMS / State Data', tag:'TX', color:'#EA4335', bg:'#fce8e6', desc:'Future slot for Texas PEIMS data integration. Connect your district\'s data export pipeline here.', status:'Future integration', badge:'b-red' },
+    { name:'Interactive Dashboards', tag:'📊', color:'#1A73E8', bg:'#EAF0FE', desc:'Live visual dashboards that pull directly from your school\'s data. Charts and tables update automatically as new data comes in.', status:'Ready to connect', badge:'b-blue' },
+    { name:'Spreadsheet Data',       tag:'📋', color:'#059669', bg:'#ECFDF5', desc:'Connect to your existing school spreadsheets. Data entered by staff automatically flows into this portal.', status:'Ready to connect', badge:'b-green' },
+    { name:'Automated Reports',      tag:'⚙️', color:'#D97706', bg:'#FFFBEB', desc:'Scheduled reports that run automatically — daily attendance summaries, weekly grade snapshots, and more — sent to this portal and to your email.', status:'Ready to connect', badge:'b-amber' },
+    { name:'Online Forms & Sign-Ins', tag:'📝', color:'#7C3AED', bg:'#F5F3FF', desc:'Connect digital forms for after-school sign-in, parent feedback, referral submissions, and more. Responses flow directly into the relevant page.', status:'Ready to connect', badge:'b-purple' },
+    { name:'Learning Management System', tag:'🎓', color:'#0D9488', bg:'#F0FDFA', desc:'Future connection to your campus LMS — pull course rosters, assignment completion rates, and teacher data into this portal.', status:'Coming soon', badge:'b-teal' },
+    { name:'State & District Reporting', tag:'🏫', color:'#DC2626', bg:'#FEF2F2', desc:'Future connection to state and district reporting systems to view compliance data and submission statuses in one place.', status:'Coming soon', badge:'b-red' },
   ];
 
   c.innerHTML = `
     <div class="pg-head">
       <div>
-        <div class="pg-title">Data Integrations</div>
-        <div class="pg-sub">Connect your tools — Looker Studio, Google App Script, Sheets, Forms, and more</div>
+        <div class="pg-title">Connected Data Sources</div>
+        <div class="pg-sub">All the tools and data systems that power your LandPage SIS portal</div>
       </div>
     </div>
 
-    ${alertBanner('green', 'How to Add Your Data', 'Every page in LandPage SIS has clearly marked embed zones. Copy your Looker Studio iframe or App Script web app URL and paste it into the corresponding zone on each page.')}
+    ${alertBanner('green', 'How Your Data Gets Here', 'LandPage SIS connects to the tools your campus already uses — spreadsheets, online forms, and reporting dashboards. Your Nexaflow setup team handles all of the technical connections. You just use the portal.')}
 
-    <div class="section-label" style="margin-top:8px">Available & Planned Integrations</div>
+    <div class="section-label" style="margin-top:8px">Available & Upcoming Connections</div>
     <div class="g-auto" style="margin-bottom:28px">
       ${tools.map(t => `
         <div class="integ-tile">
-          <div class="integ-logo" style="background:${t.bg};color:${t.color}">${t.tag}</div>
+          <div class="integ-logo" style="background:${t.bg};font-size:1.2rem">${t.tag}</div>
           <div style="flex:1">
             <div class="integ-name">${t.name}</div>
             <div class="integ-desc">${t.desc}</div>
@@ -672,78 +623,55 @@ function pageIntegrations(c) {
       `).join('')}
     </div>
 
-    <div class="section-label">How to Embed — Step by Step</div>
+    <div class="section-label">How This Works — For Administrators</div>
     <div class="card">
-      <div class="guide-step">
-        <div class="guide-num">1</div>
-        <div>
-          <div class="guide-head">Get your embed URL or iframe code</div>
-          <div class="guide-body">In Looker Studio: File → Share → Embed report → Copy the &lt;iframe&gt; tag. In Google App Script: Deploy → New deployment → Web app → Copy the URL.</div>
+      ${[
+        ['Your data stays where it is', 'LandPage SIS does not replace your existing systems. It pulls information from the tools your school already uses and displays everything in one clean portal — no data migration required.'],
+        ['Setup is handled for you', 'The Nexaflow Digital team configures all data connections during your onboarding. You do not need any technical knowledge to use or maintain this portal.'],
+        ['Data updates automatically', 'Once connected, dashboards and tables in this portal refresh automatically as new information is entered by your staff — no manual uploads needed.'],
+        ['Role-based access', 'Principals, assistant principals, counselors, and teachers can each be given access to the sections most relevant to their role. Contact Nexaflow to configure access levels.'],
+        ['You own your data', 'All data displayed in LandPage SIS originates from systems you control. Nexaflow simply provides the display layer — your campus retains full ownership and control.'],
+      ].map(([head, body], i) => `
+        <div class="guide-step">
+          <div class="guide-num">${i + 1}</div>
+          <div><div class="guide-head">${head}</div><div class="guide-body">${body}</div></div>
         </div>
-      </div>
-      <div class="guide-step">
-        <div class="guide-num">2</div>
-        <div>
-          <div class="guide-head">Find the embed zone on the target page</div>
-          <div class="guide-body">Every page (Attendance, Grades, PBIS, etc.) has clearly labeled dashed embed zones with the recommended snippet format shown inside.</div>
-        </div>
-      </div>
-      <div class="guide-step">
-        <div class="guide-num">3</div>
-        <div>
-          <div class="guide-head">Replace the placeholder with your iframe</div>
-          <div class="guide-body">In <code style="background:var(--bg-raised);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.8em">app.js</code>, find the page function (e.g. <code style="background:var(--bg-raised);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.8em">pageAttendance</code>) and replace the <code style="background:var(--bg-raised);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.8em">embedZone()</code> call with a raw <code style="background:var(--bg-raised);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.8em">&lt;iframe&gt;</code> tag using your URL.</div>
-        </div>
-      </div>
-      <div class="guide-step">
-        <div class="guide-num">4</div>
-        <div>
-          <div class="guide-head">Set permissions on your data source</div>
-          <div class="guide-body">Make sure your Looker Studio report is set to "Anyone with the link can view" or scoped to your district domain. App Script deployments should be set to "Anyone" or the appropriate audience.</div>
-        </div>
-      </div>
-      <div class="guide-step">
-        <div class="guide-num">5</div>
-        <div>
-          <div class="guide-head">Commit and deploy to GitHub Pages</div>
-          <div class="guide-body">Push the updated <code style="background:var(--bg-raised);padding:2px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.8em">app.js</code> to your GitHub repo. Enable GitHub Pages under Settings → Pages. Your SIS is live.</div>
-        </div>
-      </div>
+      `).join('')}
     </div>
   `;
 }
 
 // =====================================================
-//  PAGE: QUICK GUIDE & FAQ
+//  QUICK GUIDE & FAQ
 // =====================================================
 function pageGuide(c) {
   const faqs = [
-    ['What is LandPage SIS?', 'LandPage SIS is a school information system portal built by Nexaflow Digital. It consolidates student data, attendance, grades, behavior, and after-school programs into one clean admin interface.'],
-    ['Who can access this portal?', 'Access is intended for campus principals, assistant principals, counselors, and designated administrative staff. Role-based access can be configured in your deployment settings.'],
-    ['How do I embed a Looker Studio report?', 'In Looker Studio, go to File → Share → Embed report. Copy the &lt;iframe&gt; code and paste it into the appropriate embed zone in app.js. See the Data Integrations page for a full walkthrough.'],
-    ['How do I connect Google App Script?', 'Deploy your App Script as a Web App (Deploy → New deployment → Web app). Copy the deployment URL and embed it as an &lt;iframe src="YOUR_URL"&gt; in the relevant page function in app.js.'],
-    ['Can I add new pages or sections?', 'Yes. Each page is a self-contained function in app.js. Duplicate any existing page function, rename it, add it to the PAGES object and the sidebar nav in index.html.'],
-    ['How do I host this on GitHub Pages?', 'Push all files (index.html, styles.css, app.js) to a public GitHub repository. Go to Settings → Pages → Source: main branch / root. Your site will be live at yourusername.github.io/repo-name.'],
-    ['Can I change the school name and branding?', 'Yes. Update the sidebar school chip in index.html and modify the CSS variables in styles.css to match your district colors.'],
-    ['Is student data stored in this app?', 'No. LandPage SIS is a display shell only. All data lives in your connected sources (Google Sheets, Looker Studio, App Script). This app just presents it.'],
+    ['What is LandPage SIS?', 'LandPage SIS is a school information portal built by Nexaflow Digital. It brings together student data, attendance, grades, behavior, and after-school programs into one clean, easy-to-use dashboard for campus administrators.'],
+    ['Who should use this portal?', 'This portal is designed for campus principals, assistant principals, school counselors, and administrative staff. Each role can be given access to the sections most relevant to their work.'],
+    ['Do I need to enter data manually?', 'No. Once your portal is set up by the Nexaflow team, data flows in automatically from your connected sources. Staff can continue using the tools they already know.'],
+    ['What happens if the data looks wrong?', 'If you notice incorrect data, it means something may need to be updated in the original source — for example, in your campus spreadsheet or sign-in form. Changes made there will reflect here. Contact Nexaflow support if the issue persists.'],
+    ['Can I control who sees what?', 'Yes. LandPage SIS supports role-based access. Counselors, teachers, and administrators can each be set up with access to specific pages. Contact your Nexaflow representative to adjust access settings.'],
+    ['Can I add more pages or sections?', 'Yes. Nexaflow can build additional pages or panels for your campus — such as parent communication logs, budget summaries, or custom reports. Reach out to discuss your needs.'],
+    ['How do I get support?', 'Visit the Technical Support page in this portal for contact options, video walkthroughs, and to schedule a call with the Nexaflow team.'],
+    ['Is this portal secure?', 'Yes. LandPage SIS uses the same security standards as the tools it connects to. No student data is stored in the portal itself — it is only displayed from your existing, secured systems.'],
   ];
 
   c.innerHTML = `
     <div class="pg-head">
       <div>
         <div class="pg-title">Quick Guide & FAQ</div>
-        <div class="pg-sub">Everything you need to get started and use LandPage SIS effectively</div>
+        <div class="pg-sub">Everything you need to know to navigate and use your campus portal</div>
       </div>
     </div>
 
-    <div class="section-label">Getting Started — 5 Steps</div>
+    <div class="section-label">Getting Started — 5 Simple Steps</div>
     <div class="card" style="margin-bottom:22px">
       ${[
-        ['Navigate the Sidebar', 'Use the left sidebar to move between sections: Dashboard, Student Roster, Grades, Attendance, PBIS, After-School, Staff, Analytics, and Integrations.'],
-        ['Understand the Embed Zones', 'Dashed gray boxes throughout the app are embed zones — placeholders waiting for your Looker Studio or App Script data. They show you exactly what goes where.'],
-        ['Connect Your First Data Source', 'Start with the Attendance page. Embed your Looker Studio attendance report iframe in the "Daily Attendance Chart" zone. See the Integrations page for full instructions.'],
-        ['Customize Stat Cards', 'The KPI stat cards at the top of each page show "—" by default. Replace the value in the statCard() call inside app.js with your live data or a hardcoded summary.'],
-        ['Deploy to GitHub Pages', 'Once your embeds are in place, push to GitHub and enable Pages. Share the URL with your admin team and you\'re live.'],
+        ['Navigate using the left sidebar', 'Click any section in the menu on the left side of the screen — Dashboard, Student Roster, Attendance, Behavior, and more. Each section has its own page with filters, charts, and data tables.'],
+        ['Use the search bar at the top', 'The search bar at the top of every page lets you quickly find students, staff, or reports without navigating through menus.'],
+        ['Filter and sort your data', 'Most pages include filter dropdowns — by grade level, status, department, or date range — to help you narrow down exactly what you\'re looking for.'],
+        ['Download and share reports', 'Any page with a report panel includes a download button. Use this to export data as a PDF or spreadsheet for meetings, district submissions, or parent communications.'],
+        ['Contact Nexaflow for changes', 'If you need a new section, updated data connection, or a change to how information is displayed, reach out to the Nexaflow support team through the Technical Support page.'],
       ].map(([head, body], i) => `
         <div class="guide-step">
           <div class="guide-num">${i + 1}</div>
@@ -754,11 +682,11 @@ function pageGuide(c) {
 
     <div class="section-label">Frequently Asked Questions</div>
     <div class="card" id="faqCard">
-      ${faqs.map(([q, a], i) => `
-        <div class="faq-item" data-idx="${i}">
+      ${faqs.map(([ q, a]) => `
+        <div class="faq-item">
           <div class="faq-q">
             <span>${q}</span>
-            ${icon(ICONS.chevron, 16)}
+            ${icon(I.chevron, 16)}
           </div>
           <div class="faq-a">${a}</div>
         </div>
@@ -766,7 +694,6 @@ function pageGuide(c) {
     </div>
   `;
 
-  // FAQ accordion
   document.querySelectorAll('.faq-item').forEach(item => {
     item.querySelector('.faq-q').addEventListener('click', () => {
       const open = item.classList.contains('open');
@@ -777,27 +704,29 @@ function pageGuide(c) {
 }
 
 // =====================================================
-//  PAGE: TECHNICAL SUPPORT
+//  TECHNICAL SUPPORT
 // =====================================================
 function pageSupport(c) {
   const cards = [
-    { icon:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', color:'var(--accent)', bg:'var(--accent-lo)',  title:'Video Walkthroughs', desc:'Short screen-recorded tutorials covering each section of LandPage SIS — embedding data, customizing pages, and deploying to GitHub.' },
-    { icon:ICONS.mail,  color:'var(--blue)',  bg:'var(--blue-lo)',  title:'Email Support',        desc:'Reach the Nexaflow Digital team at support@nexaflowdigital.com. We respond within 1 business day for active clients.' },
-    { icon:ICONS.link,  color:'var(--green)', bg:'var(--green-lo)', title:'Documentation',        desc:'Full technical documentation including the embed guide, color token reference, and page customization instructions are available on the Nexaflow docs site.' },
-    { icon:ICONS.phone, color:'var(--amber)', bg:'var(--amber-lo)', title:'Live Onboarding Call', desc:'Schedule a 30-minute onboarding call with the Nexaflow team to walk through your specific data sources and get your first embeds connected live.' },
-    { icon:'<path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>', color:'var(--purple)', bg:'var(--purple-lo)', title:'GitHub Repository',     desc:'Access the source code, submit issues, or fork the repository from the private Nexaflow GitHub org. Repo access is included with your license.' },
-    { icon:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>', color:'var(--red)', bg:'var(--red-lo)',  title:'Report a Bug',          desc:'Found something broken? Use the bug report form linked here to submit detailed info. Include the page name, browser, and steps to reproduce.' },
+    { icon: I.video, color:'var(--accent)', bg:'var(--accent-lo)', title:'Video Walkthroughs', desc:'Short video tutorials covering each section of the portal — great for onboarding new staff members or reviewing how a specific feature works.' },
+    { icon: I.mail,  color:'var(--teal)',   bg:'var(--teal-lo)',   title:'Email Support',     desc:'Send a message to the Nexaflow Digital support team. We respond within one business day for all active accounts.' },
+    { icon: I.book,  color:'var(--green)',  bg:'var(--green-lo)',  title:'Documentation',     desc:'Step-by-step written guides covering every section of the portal, written specifically for school administrators — no technical knowledge needed.' },
+    { icon: I.phone, color:'var(--amber)',  bg:'var(--amber-lo)',  title:'Live Support Call', desc:'Schedule a 30-minute call with a member of the Nexaflow team. Ideal for questions, data connection issues, or requesting new features.' },
+    { icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+      color:'var(--purple)', bg:'var(--purple-lo)', title:'Request a Feature', desc:'Have an idea for a new page, report, or data view? Submit a feature request and the Nexaflow team will follow up to discuss options and timeline.' },
+    { icon: '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+      color:'var(--red)', bg:'var(--red-lo)', title:'Report an Issue', desc:'Something not displaying correctly? Use the issue report form to describe what you\'re seeing. Include the page name and what you expected to happen.' },
   ];
 
   c.innerHTML = `
     <div class="pg-head">
       <div>
         <div class="pg-title">Technical Support</div>
-        <div class="pg-sub">Resources, documentation, and direct support from Nexaflow Digital</div>
+        <div class="pg-sub">Resources and direct support from the Nexaflow Digital team</div>
       </div>
     </div>
 
-    ${alertBanner('blue', 'Nexaflow Digital Support', 'This portal was built by Nexaflow Digital. For customizations, data integrations, or white-label licensing inquiries, contact the team directly.')}
+    ${alertBanner('blue', 'We\'re here to help', 'The Nexaflow Digital team supports all LandPage SIS portals. For data connections, design changes, new sections, or anything that isn\'t working as expected — reach out using any of the options below.')}
 
     <div class="g-auto" style="margin-top:20px">
       ${cards.map(s => `
@@ -812,21 +741,21 @@ function pageSupport(c) {
     </div>
 
     <div class="divider"></div>
-    <div class="section-label">System Info</div>
+    <div class="section-label">Portal Information</div>
     <div class="card">
       <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.82rem">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
           ${[
-            ['App Version', 'v1.0.0'],
-            ['Built By', 'Nexaflow Digital'],
-            ['Framework', 'Vanilla HTML / CSS / JS'],
-            ['Hosting', 'GitHub Pages'],
-            ['Data Layer', 'Looker Studio + Google App Script'],
-            ['Campus', 'Lakewood Ridge High — LRH-001'],
-          ].map(([k,v]) => `
-            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-              <span style="color:var(--text-lo)">${k}</span>
-              <span style="font-family:var(--font-mono);color:var(--text-md)">${v}</span>
+            ['Portal Version',    'v1.0.0'],
+            ['Built By',          'Nexaflow Digital'],
+            ['Campus',            'Lakewood Ridge High'],
+            ['Campus ID',         'LRH-001'],
+            ['Support Hours',     'Mon–Fri, 8am–5pm CST'],
+            ['Support Email',     'support@nexaflowdigital.com'],
+          ].map(([k, v]) => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:0.82rem;color:var(--text-lo)">${k}</span>
+              <span style="font-size:0.82rem;font-weight:600;color:var(--text-md)">${v}</span>
             </div>
           `).join('')}
         </div>
