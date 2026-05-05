@@ -10,7 +10,7 @@ const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxVGRXyKIgrtL1M-CNO1Bu
 const TABS = {
   students:  'All Students - Raw Data',
   contacts:  'Contact Log',
-  saturday:  'Accountability Hour',
+  accountability:  'Accountability Hour',
   checkin:   'Accountability Log',
   behavior:  'Behavior Logs',
   absences:  'Absences',
@@ -260,7 +260,7 @@ function dashboard(c) {
             ${[
               ['contactlog','b-teal','var(--teal)','Log a Contact','Contact Log'],
               ['behavior','b-purple','var(--purple)','Log Behavior','Behavior & Conduct'],
-              ['saturdaysch','b-amber','var(--amber)','Accountability Hour','Assign a Student'],
+              ['accounthou','b-amber','var(--amber)','Accountability Hour','Assign a Student'],
               ['accountlog','b-blue','var(--blue)','Check-In / Out','Accountability Log'],
             ].map(([pg,badge,col,lbl,sub])=>`
               <button onclick="navigate('${pg}')" style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 13px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;transition:all .15s;text-align:left" onmouseover="this.style.borderColor='${col}';this.style.background='#fff'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg)'">
@@ -291,7 +291,7 @@ function dashboard(c) {
         ['staar',      'green', '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>','STAAR Data','Assessment scores and mastery breakdown'],
         ['behavior',   'purple','<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',                            'Behavior & Conduct','Log and review all conduct entries'],
         ['contactlog', 'teal',  '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/>','Contact Log','Parent and student contact records'],
-        ['saturdaysch','amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/>','Accountability Hour','Assignments and attendance confirmations'],
+        ['accounthou','amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/>','Accountability Hour','Assignments and attendance confirmations'],
         ['accountlog', 'blue',  '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>','Accountability Log','Check-in and check-out time records'],
         ['analytics',  'green', '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>','Analytics & Reports','Campus-wide summaries from all data'],
       ].map(([pg,col,ico,lbl,desc])=>`
@@ -306,7 +306,7 @@ function dashboard(c) {
     fetchSheet(TABS.students),
     fetchSheet(TABS.behavior),
     fetchSheet(TABS.contacts),
-    fetchSheet(TABS.saturday),
+    fetchSheet(TABS.accountability),
     fetchSheet(TABS.staar),
     fetchSheet(TABS.checkin),
   ]).then(([stu,beh,con,sat,staar,chk]) => {
@@ -316,7 +316,7 @@ function dashboard(c) {
       kpi('Students', stu.rows.length, 'Currently enrolled', 'blue', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>') +
       kpi('Behavior Entries', beh.rows.length, 'Total logged', 'purple', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>') +
       kpi('Contacts Logged', con.rows.length, 'Parent & student', 'teal', '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/>') +
-      kpi('Saturday School', sat.rows.length, 'Assigned this year', 'amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>') +
+      kpi('Accountability Hour', sat.rows.length, 'Assigned this year', 'amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>') +
       kpi('STAAR Passed', `${passed}/${staar.rows.length}`, 'Biology assessment', 'green', '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>') +
       kpi('Check-Ins', chk.rows.length, 'Accountability log', 'blue', '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>');
 
@@ -655,14 +655,14 @@ function contactlog(c) {
 }
 
 // ==============================================================
-//  SATURDAY SCHOOL  (read + add)
+//  Accountability Hour  (read + add)
 // ==============================================================
-function saturdaysch(c) {
+function accountabilityhou(c) {
   c.innerHTML=`
-    <div class="ph"><div><div class="ph-title">Saturday School</div><div class="ph-sub">Assignments, reasons, and attendance confirmations</div></div>
+    <div class="ph"><div><div class="ph-title">Accountability Hour</div><div class="ph-sub">Assignments, reasons, and attendance confirmations</div></div>
     <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="loadSat()">${ic(P.ref,14)} Refresh</button><button class="btn btn-primary btn-sm" id="sat-add">${ic(P.plus,14)} Assign Student</button></div></div>
     <div class="kpi-grid" id="sat-kpis">${loading()}</div>
-    <div class="card"><div class="card-hd"><div class="card-title">Saturday School Records</div><span class="badge b-teal">Live · Google Sheets</span></div>
+    <div class="card"><div class="card-hd"><div class="card-title">Accountability Hour Records</div><span class="badge b-teal">Live · Google Sheets</span></div>
     <div class="card-bd" style="padding-bottom:0"><div class="search-row">
       <div class="sf">${ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input id="satq" type="text" placeholder="Search student ID…"/></div>
       <select class="sel" id="satr"><option value="">All Reasons</option><option>Behavior</option><option>Communication Device</option><option>Attendance</option><option>Other</option></select>
@@ -672,7 +672,7 @@ function saturdaysch(c) {
 
   let all=[];
   window.loadSat=function(){
-    fetchSheet(TABS.saturday).then(d=>{
+    fetchSheet(TABS.accountability).then(d=>{
       all=d.rows;
       const att=all.filter(r=>String(r['Attended']||'').toLowerCase()==='yes');
       $('sat-kpis').innerHTML=
@@ -698,16 +698,16 @@ function saturdaysch(c) {
   $('satq')?.addEventListener('input',filter);$('satr')?.addEventListener('change',filter);$('sata')?.addEventListener('change',filter);
   loadSat();
 
-  $('sat-add')?.addEventListener('click',()=>modal('Assign Saturday School',`
+  $('sat-add')?.addEventListener('click',()=>modal('Assign Accountability Hour',`
     <div class="fg"><label>Student ID</label><input class="fi" id="f1" placeholder="e.g. 90000001"/></div>
-    <div class="fg"><label>Date of Saturday School</label><input class="fi" id="f2" type="date"/></div>
+    <div class="fg"><label>Date of Accountability Hour</label><input class="fi" id="f2" type="date"/></div>
     <div class="fg"><label>Reason</label><select class="fi" id="f3"><option>Behavior</option><option>Communication Device</option><option>Attendance</option><option>Other</option></select></div>
     <div class="fg"><label>Other Reason (if applicable)</label><input class="fi" id="f4" placeholder="Describe if Other selected"/></div>
     <div class="fg"><label>Notes</label><textarea class="fi" id="f5" rows="2" placeholder="Additional notes…"></textarea></div>
     <div class="fg"><label>Minutes Assigned</label><input class="fi" id="f6" type="number" placeholder="e.g. 60"/></div>
     <div class="fg"><label>Assigned By (your name or email)</label><input class="fi" id="f7" placeholder="your.email@school.edu"/></div>`,
     async()=>{
-      try{await postRow('Saturday School',[$('f1').value,$('f2').value,$('f3').value,$('f4').value,$('f5').value,$('f6').value,$('f7').value]);closeModal();toast('Saturday School entry saved!');loadSat();}
+      try{await postRow('Accountability Hour',[$('f1').value,$('f2').value,$('f3').value,$('f4').value,$('f5').value,$('f6').value,$('f7').value]);closeModal();toast('Accountability Hour entry saved!');loadSat();}
       catch{toast('Could not save — check Connected Data Sources page.','r');$('mSave').disabled=false;$('mSave').innerHTML=ic(P.plus,14)+' Save Entry';}
     }));
 }
@@ -782,21 +782,21 @@ function analytics(c) {
     <div class="kpi-grid" id="ana-kpis">${loading()}</div>
     <div class="g2">
       <div class="card"><div class="card-hd"><div class="card-title">Behavior Balance</div></div><div class="card-bd" id="ana-beh">${loading()}</div></div>
-      <div class="card"><div class="card-hd"><div class="card-title">Saturday School Attendance</div></div><div class="card-bd" id="ana-sat">${loading()}</div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Accountability Hour Attendance</div></div><div class="card-bd" id="ana-sat">${loading()}</div></div>
     </div>`;
 
   Promise.all([
     fetchSheet(TABS.students),
     fetchSheet(TABS.behavior),
     fetchSheet(TABS.contacts),
-    fetchSheet(TABS.saturday),
+    fetchSheet(TABS.accountability),
     fetchSheet(TABS.checkin),
   ]).then(([stu,beh,con,sat,chk])=>{
     $('ana-kpis').innerHTML=
       kpi('Students', stu.rows.length, 'Current roster', 'blue') +
       kpi('Behavior Logs', beh.rows.length, 'Total entries', 'purple') +
       kpi('Contacts', con.rows.length, 'Logged contacts', 'teal') +
-      kpi('Saturday School', sat.rows.length, 'Assignments', 'amber') +
+      kpi('Accountability Hour', sat.rows.length, 'Assignments', 'amber') +
       kpi('Check-Ins', chk.rows.length, 'Accountability', 'green');
 
     const pos=beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('pos')).length;
@@ -848,7 +848,7 @@ function integrations(c) {
       ['Open Google Apps Script','Go to script.google.com and start a new project. Give it a name like "LandPage SIS."'],
       ['Paste the write script','Copy the script code provided by your Nexaflow administrator and paste it into the editor. Save the file.'],
       ['Deploy as a Web App','Click Deploy → New Deployment → Web App. Set "Execute as: Me" and "Who has access: Anyone." Click Deploy and copy the URL.'],
-      ['Connect it to the portal','Share the URL with your Nexaflow admin to add it to the portal. All log forms — Behavior, Contact, Saturday School, and Accountability — will then write directly to your Google Sheet.'],
+      ['Connect it to the portal','Share the URL with your Nexaflow admin to add it to the portal. All log forms — Behavior, Contact, Accountability Hour, and Accountability — will then write directly to your Google Sheet.'],
     ].map(([h,b],i)=>`<div class="guide-step"><div class="g-num">${i+1}</div><div><div class="g-head">${h}</div><div class="g-body">${b}</div></div></div>`).join('')}
     <div style="padding:14px 18px;background:var(--green-lo);border-top:1px solid var(--border)"><div style="font-size:.8rem;font-weight:700;color:var(--green);margin-bottom:2px">Saving Is Connected</div><div style="font-size:.77rem;color:var(--tx2)">New entries will be sent to your Google Apps Script Web App and added to the connected Google Sheet.</div></div>
     </div>`;
@@ -861,7 +861,7 @@ function guide(c) {
   const faqs=[
     ['Where does the data come from?','All data is pulled live from your Google Sheet each time you visit a page. Any changes made in the spreadsheet automatically appear here on refresh.'],
     ['Why does some data show dashes or blanks?','The spreadsheet uses lookup formulas in many cells. If a formula has not resolved to a real value yet, it may show as blank here. Updating the source data in the spreadsheet will fix it.'],
-    ['How do I log a new record?','Pages that support adding records — Behavior, Contact Log, Saturday School, and Accountability Log — each have a button in the top right corner. Tap it to open the entry form.'],
+    ['How do I log a new record?','Pages that support adding records — Behavior, Contact Log, Accountability Hour, and Accountability Log — each have a button in the top right corner. Tap it to open the entry form.'],
     ['Will saved entries appear right away?','Yes. After saving, the page automatically reloads the data from your sheet. The new record will appear in the table.'],
     ['Why does the Save button not write to my sheet?','The write connection requires a one-time setup step. If saving fails, check the Apps Script deployment settings. See the Connected Data Sources page for setup steps.'],
     ['How do I search or filter records?','Every page has a search bar and filter dropdowns above the table. Type to search or select a filter — the table updates immediately.'],
@@ -879,7 +879,7 @@ function guide(c) {
       ['STAAR Data','Assessment scores filtered by mastery level (Masters, Meets, Approaches, Did Not Meet) and pass/fail status.'],
       ['Behavior & Conduct','Log and review positive recognitions and conduct referrals. The snapshot at the top shows the positive vs. negative split at a glance.'],
       ['Contact Log','Log and review all parent and student contacts. Searchable by student ID.'],
-      ['Saturday School','Assign students to Saturday school and track whether they attended. Filter by reason and status.'],
+      ['Accountability Hour','Assign students to Accountability Hour and track whether they attended. Filter by reason and status.'],
       ['Accountability Log','Log check-in and check-out times. Total hours are calculated automatically.'],
       ['Analytics','Auto-built campus summary from all your connected sheets. No setup required.'],
     ].map(([h,b],i)=>`<div class="guide-step"><div class="g-num">${i+1}</div><div><div class="g-head">${h}</div><div class="g-body">${b}</div></div></div>`).join('')}</div>
