@@ -98,7 +98,7 @@ async function fetchSheet(tab) {
 
 // ── POST (write) ─────────────────────────────────────────────
 async function postRow(sheet, row) {
-  if (GAS_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+  if (GAS_URL === 'https://script.google.com/macros/s/AKfycbxVGRXyKIgrtL1M-CNO1BuHGSSl4sCCumC5fa_we2xKPhRrIOH8wLeS6UuAIyAL3Zp0/exec') {
     await new Promise(r => setTimeout(r, 600));
     return { status:'ok', demo:true };
   }
