@@ -1,467 +1,919 @@
 'use strict';
-
 // ============================================================
-//  LANDPAGE SIS — app.js
-//  Live data from Google Sheets public JSON API
-//  Write operations via Google Apps Script Web App (GAS_URL)
+//  LANDPAGE SIS v3  —  app.js
+//  Light theme · Big-picture first · Live Google Sheets data
 // ============================================================
 
-const SHEET_ID  = '1nseJo0bqR2GgZtTMlEPYWpdT1x4zJT2DZiGTBaeVl2A';
-const GAS_URL   = 'https://script.google.com/macros/s/AKfycbypsBuKjz58aEbJvzQwGfHVFVIka4wfguF9YoOAXiYxpXYJEQQH_zS2fRR-QEQYhtPr/exec';
+const SHEET_ID = '1nseJo0bqR2GgZtTMlEPYWpdT1x4zJT2DZiGTBaeVl2A';
+const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxVGRXyKIgrtL1M-CNO1BuHGSSl4sCCumC5fa_we2xKPhRrIOH8wLeS6UuAIyAL3Zp0/exec';  // paste after deploying Apps Script
 
 const TABS = {
-  students:       'All Students - Raw Data',
-  contactLog:     'Contact Log',
-  saturdaySchool: 'Saturday School',
-  accountLog:     'Accountability Log',
-  behaviorLogs:   'Behavior Logs',
-  absences:       'Absences',
-  tardies:        'Tardies',
-  staar:          'STAAR',
+  students:  'All Students - Raw Data',
+  contacts:  'Contact Log',
+  saturday:  'Saturday School',
+  checkin:   'Accountability Log',
+  behavior:  'Behavior Logs',
+  absences:  'Absences',
+  tardies:   'Tardies',
+  staar:     'STAAR',
 };
 
-function $(id) { return document.getElementById(id); }
-function icon(path, size=16) { return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${path}</svg>`; }
+// ── tiny helpers ─────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const ic = (p,s=16) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${p}</svg>`;
 
-const I = {
-  alert:   '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
-  info:    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
-  check:   '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14 9 11"/>',
-  chevron: '<polyline points="6 9 12 15 18 9"/>',
-  dl:      '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+const P = {
   plus:    '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
-  refresh: '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
-  mail:    '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
-  phone:   '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29z"/>',
-  video:   '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>',
-  book:    '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
-  chat:    '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  ref:     '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>',
+  chev:    '<polyline points="6 9 12 15 18 9"/>',
   x:       '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  check:   '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14 9 11"/>',
+  warn:    '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  info:    '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>',
+  mail:    '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+  phone:   '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/>',
+  book:    '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  video:   '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/>',
+  chat:    '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
 };
 
-function fmtDate(val) {
-  if (!val) return '—';
-  const d = new Date(val);
-  return isNaN(d) ? val : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+function fmtDate(v) {
+  if (!v) return '—';
+  try { return new Date(v).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+  catch { return String(v); }
 }
-function fmtTime(val) {
-  if (!val) return '—';
-  const d = new Date(val);
-  return isNaN(d) ? val : d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+function fmtDateTime(v) {
+  if (!v) return '—';
+  try { return new Date(v).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+  catch { return String(v); }
 }
+function safe(v) { return v ?? '—'; }
 
-function alertBanner(type, title, body) {
-  const cls = {amber:'a-amber',red:'a-red',green:'a-green',blue:'a-blue'}[type]||'a-blue';
-  const ico = {amber:I.alert,red:I.alert,green:I.check,blue:I.info}[type]||I.info;
-  const col = {amber:'var(--amber)',red:'var(--red)',green:'var(--green)',blue:'var(--accent)'}[type]||'var(--accent)';
-  return `<div class="alert ${cls}"><div style="flex-shrink:0;margin-top:1px;color:${col}">${icon(ico,16)}</div><div><div class="alert-title">${title}</div><div class="alert-body">${body}</div></div></div>`;
-}
-
-function statCard(label,value,meta,color='blue') {
-  return `<div class="stat-card sc-${color}"><div class="stat-label">${label}</div><div class="stat-val">${value}</div><div class="stat-meta">${meta}</div></div>`;
-}
-
-const spinCSS = document.createElement('style');
-spinCSS.textContent = `
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.modal-backdrop{position:fixed;inset:0;background:rgba(15,31,61,.45);z-index:999}
-.modal-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--radius-lg);width:min(520px,94vw);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;max-height:90vh}
-.modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
-.modal-title{font-family:var(--font-head);font-weight:700;font-size:1rem;color:var(--text-hi)}
-.modal-body{padding:20px;overflow-y:auto;flex:1}
-.modal-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border)}
-.form-group{margin-bottom:14px}
-.form-group label{display:block;font-size:0.78rem;font-weight:600;color:var(--text-md);margin-bottom:5px;letter-spacing:.02em}
-.form-input{width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-size:0.845rem;font-family:var(--font-ui);color:var(--text-hi);outline:none;transition:border-color .15s}
-.form-input:focus{border-color:var(--accent)}
-textarea.form-input{resize:vertical;min-height:70px}
-.toast{position:fixed;bottom:24px;right:24px;z-index:2000;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--radius);font-size:0.845rem;font-weight:600;box-shadow:var(--shadow-lg);animation:pgIn .25s ease}
-.toast-green{background:var(--green);color:#fff}
-.toast-red{background:var(--red);color:#fff}
-`;
-document.head.appendChild(spinCSS);
-
-function loadingHTML(msg='Loading…') {
-  return `<div style="display:flex;align-items:center;gap:10px;padding:36px 20px;color:var(--text-lo);font-size:.875rem"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>${msg}</div>`;
-}
-function errorHTML(msg) {
-  return `<div style="padding:18px;color:var(--red);font-size:.845rem;background:var(--red-lo);border-radius:8px;margin:10px">${icon(I.alert,15)} ${msg}</div>`;
-}
+// ── CSS injected at runtime ───────────────────────────────────
+document.head.insertAdjacentHTML('beforeend',`<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader{display:flex;align-items:center;gap:10px;padding:36px 22px;color:var(--tx4);font-size:.85rem}
+.loader svg{animation:spin 1s linear infinite;flex-shrink:0}
+.empty{padding:32px;text-align:center;color:var(--tx4);font-size:.85rem}
+.err-box{padding:14px 16px;color:var(--red);font-size:.82rem;background:var(--red-lo);border-radius:8px;margin:12px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+/* modal */
+.m-back{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:900;backdrop-filter:blur(3px)}
+.m-box{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:901;background:#fff;border:1.5px solid var(--border);border-radius:var(--rl);width:min(520px,94vw);box-shadow:var(--sh2);display:flex;flex-direction:column;max-height:90vh;animation:pgIn .2s ease}
+.m-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);background:#FAFBFF}
+.m-title{font-family:var(--head);font-weight:700;font-size:.98rem;color:var(--tx1)}
+.m-body{padding:20px;overflow-y:auto;flex:1}
+.m-foot{display:flex;align-items:center;justify-content:flex-end;gap:9px;padding:14px 20px;border-top:1px solid var(--border);background:#FAFBFF}
+.fg{margin-bottom:16px}
+.fg label{display:block;font-size:.74rem;font-weight:700;color:var(--tx2);margin-bottom:5px;letter-spacing:.02em}
+.fi{width:100%;background:var(--bg-input);border:1.5px solid var(--border);border-radius:var(--rs);padding:9px 12px;font-size:.845rem;font-family:var(--ui);color:var(--tx1);outline:none;transition:border-color .15s,box-shadow .15s}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+textarea.fi{resize:vertical;min-height:72px}
+/* toast */
+.toast{position:fixed;bottom:22px;right:22px;z-index:1000;display:flex;align-items:center;gap:9px;padding:12px 18px;border-radius:var(--r);font-size:.845rem;font-weight:600;box-shadow:var(--sh2);animation:pgIn .22s ease}
+.tg{background:var(--green);color:#fff} .tr{background:var(--red);color:#fff} .tb{background:var(--blue);color:#fff}
+/* tab switcher */
+.tabs{display:flex;gap:2px;background:var(--bg-input);border:1.5px solid var(--border);border-radius:var(--rs);padding:3px;margin-bottom:16px;width:fit-content}
+.tab-btn{padding:6px 14px;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--tx3);transition:all .15s}
+.tab-btn.active{background:#fff;color:var(--blue);box-shadow:var(--sh0)}
+/* big number highlight */
+.big-num{font-family:var(--head);font-size:3rem;font-weight:800;letter-spacing:-.05em;line-height:1;color:var(--tx1)}
+.big-lbl{font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--tx3);margin-top:5px}
+</style>`);
 
 // ── GOOGLE SHEETS FETCH ──────────────────────────────────────
-async function fetchSheet(tabName) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
-  const res = await fetch(url);
-  const text = await res.text();
-  const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+async function fetchSheet(tab) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tab)}`;
+  const r   = await fetch(url);
+  const txt = await r.text();
+  const match = txt.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+  if (!match) throw new Error('Could not parse sheet response. Check sheet permissions.');
+  const json = JSON.parse(match[1]);
+  if (!json.table) throw new Error('No table data returned.');
   const cols = json.table.cols.map(c => c.label || c.id);
-  const rows = (json.table.rows || []).map(r =>
-    Object.fromEntries(cols.map((c,i) => [c, r.c[i]?.v ?? null]))
+  const rows = (json.table.rows || []).map(row =>
+    Object.fromEntries(cols.map((c,i) => [c, row.c?.[i]?.v ?? null]))
   );
   return { cols, rows };
 }
 
-// ── MODAL ────────────────────────────────────────────────────
-function showModal(title, bodyHTML, onSubmit) {
-  const old = $('sis-modal'); if(old) old.remove();
-  const el = document.createElement('div');
-  el.id = 'sis-modal';
-  el.innerHTML = `<div class="modal-backdrop"></div><div class="modal-box"><div class="modal-head"><div class="modal-title">${title}</div><button class="icon-btn modal-close" id="modalClose">${icon(I.x,16)}</button></div><div class="modal-body">${bodyHTML}</div><div class="modal-foot"><button class="btn btn-ghost" id="modalCancel">Cancel</button><button class="btn btn-primary" id="modalSubmit">${icon(I.plus,14)} Save Entry</button></div></div>`;
-  document.body.appendChild(el);
-  el.querySelector('.modal-backdrop').addEventListener('click', closeModal);
-  $('modalClose').addEventListener('click', closeModal);
-  $('modalCancel').addEventListener('click', closeModal);
-  $('modalSubmit').addEventListener('click', () => {
-    $('modalSubmit').disabled=true; $('modalSubmit').textContent='Saving…';
-    onSubmit(el.querySelector('.modal-body'));
-  });
-}
-function closeModal() { const e=$('sis-modal'); if(e) e.remove(); }
-function showToast(msg, type='green') {
-  const old=$('sis-toast'); if(old) old.remove();
-  const t=document.createElement('div');
-  t.id='sis-toast'; t.className=`toast toast-${type}`;
-  t.innerHTML=`${icon(type==='green'?I.check:I.alert,15)} ${msg}`;
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),3500);
-}
-
-// ── POST TO GAS ──────────────────────────────────────────────
-async function postToGAS(payload) {
+// ── POST (write) ─────────────────────────────────────────────
+async function postRow(sheet, row) {
   if (GAS_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
-    await new Promise(r=>setTimeout(r,700));
-    return {status:'ok',demo:true};
+    await new Promise(r => setTimeout(r, 600));
+    return { status:'ok', demo:true };
   }
-  const res = await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  return res.json();
+  const r = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({sheet, row}) });
+  return r.json();
 }
 
-// ── TABLE RENDERER ───────────────────────────────────────────
-function renderTable(rows, colMap) {
-  if (!rows.length) return `<div style="padding:28px;text-align:center;color:var(--text-lo);font-size:.845rem">No records found.</div>`;
-  return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${colMap.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${colMap.map((c,i)=>`<td class="${i===0?'td-main':''}">${c.fmt?c.fmt(r[c.key]):(r[c.key]??'—')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+// ── MODAL ────────────────────────────────────────────────────
+function modal(title, body, onSave) {
+  $('sis-modal')?.remove();
+  const el = Object.assign(document.createElement('div'), {id:'sis-modal'});
+  el.innerHTML = `<div class="m-back"></div><div class="m-box"><div class="m-hd"><div class="m-title">${title}</div><button class="btn btn-ghost btn-sm" id="mClose">${ic(P.x,15)}</button></div><div class="m-body">${body}</div><div class="m-foot"><button class="btn btn-ghost" id="mCancel">Cancel</button><button class="btn btn-primary" id="mSave">${ic(P.plus,14)} Save Entry</button></div></div>`;
+  document.body.appendChild(el);
+  const close = () => el.remove();
+  el.querySelector('.m-back').onclick = close;
+  $('mClose').onclick  = close;
+  $('mCancel').onclick = close;
+  $('mSave').onclick   = () => { $('mSave').disabled=true; $('mSave').innerHTML='Saving…'; onSave(el.querySelector('.m-body')); };
+}
+function closeModal() { $('sis-modal')?.remove(); }
+
+function toast(msg, type='g') {
+  $('sis-toast')?.remove();
+  const t = Object.assign(document.createElement('div'), {id:'sis-toast', className:`toast t${type}`});
+  t.innerHTML = `${ic(type==='g'?P.check:P.warn,15)} ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// ── LOADING / ERROR ──────────────────────────────────────────
+const loading = (msg='Loading data…') =>
+  `<div class="loader">${ic(P.ref,18)} ${msg}</div>`;
+
+const errBox = msg =>
+  `<div class="err-box">${ic(P.warn,16)} <div><strong>Could not load data.</strong><br>${msg}</div></div>`;
+
+// ── ALERT BANNER ─────────────────────────────────────────────
+function banner(type, title, body) {
+  const map = { blue:'a-blue', green:'a-green', amber:'a-amber', red:'a-red' };
+  const ico = { blue:P.info, green:P.check, amber:P.warn, red:P.warn };
+  const col = { blue:'var(--blue)', green:'var(--green)', amber:'var(--amber)', red:'var(--red)' };
+  return `<div class="alert ${map[type]||'a-blue'}"><div style="flex-shrink:0;color:${col[type]};margin-top:1px">${ic(ico[type]||P.info,16)}</div><div><div class="alert-title">${title}</div><div class="alert-body">${body}</div></div></div>`;
+}
+
+// ── KPI CARD ─────────────────────────────────────────────────
+function kpi(label, val, meta, color='blue', iconPath='') {
+  return `<div class="kpi kpi-${color}">
+    ${iconPath?`<div class="kpi-icon">${ic(iconPath,18)}</div>`:''}
+    <div class="kpi-lbl">${label}</div>
+    <div class="kpi-val">${val}</div>
+    ${meta?`<div class="kpi-meta">${meta}</div>`:''}
+  </div>`;
+}
+
+// ── TABLE ─────────────────────────────────────────────────────
+function table(rows, cols) {
+  // cols: [{key, label, fmt}]
+  if (!rows.length) return `<div class="empty">No records found.</div>`;
+  return `<div class="tbl-wrap"><table class="tbl">
+    <thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r=>`<tr>${cols.map((c,i)=>`<td ${i===0?'style="font-weight:700;color:var(--tx1)"':''}>${c.fmt?c.fmt(r[c.key]):safe(r[c.key])}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// ── PROGRESS ROW ──────────────────────────────────────────────
+function progRow(label, count, total, color) {
+  const pct = total ? Math.round(count/total*100) : 0;
+  return `<div style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+      <span style="font-size:.83rem;font-weight:500;color:var(--tx1)">${label}</span>
+      <span style="font-size:.82rem;font-weight:700;color:var(--tx2)">${count} <span style="color:var(--tx4);font-weight:400">(${pct}%)</span></span>
+    </div>
+    <div class="prog"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
+  </div>`;
 }
 
 // ── ROUTER ───────────────────────────────────────────────────
-const PAGES={dashboard:pageDashboard,students:pageStudents,absences:pageAbsences,tardies:pageTardies,behavior:pageBehavior,contactlog:pageContactLog,saturdaysch:pageSaturdaySchool,accountlog:pageAccountLog,staar:pageSTAAR,analytics:pageAnalytics,integrations:pageIntegrations,guide:pageGuide,support:pageSupport};
+const PAGES = { dashboard, students, absences, tardies, staar, behavior, contactlog, saturdaysch, accountlog, analytics, integrations, guide, support };
 
 function navigate(key) {
-  document.querySelectorAll('.nav-link').forEach(el=>el.classList.toggle('active',el.dataset.page===key));
-  const wrap=$('pageWrap'); if(!wrap) return;
-  wrap.style.animation='none'; void wrap.offsetHeight; wrap.style.animation='pgIn .28s ease';
-  wrap.innerHTML=''; (PAGES[key]||pageDashboard)(wrap); wire(wrap);
-  wrap.parentElement.scrollTop=0;
-  if(window.innerWidth<900) closeSidebar();
+  document.querySelectorAll('.s-link').forEach(el => el.classList.toggle('active', el.dataset.page===key));
+  const wrap = $('pageWrap');
+  if (!wrap) return;
+  wrap.style.animation='none'; void wrap.offsetHeight; wrap.style.animation='pgIn .25s ease';
+  wrap.innerHTML=''; (PAGES[key]||dashboard)(wrap);
+  wire(wrap); wrap.parentElement.scrollTop=0;
+  if (window.innerWidth<900) { $('sidebar').classList.remove('open'); $('overlay').classList.remove('show'); }
 }
-function wire(root){root.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();navigate(el.dataset.page);}));}
+function wire(root) { root.querySelectorAll('[data-page]').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();navigate(el.dataset.page);})); }
 
-document.addEventListener('DOMContentLoaded',()=>{
-  const d=new Date(), el=$('topDate');
-  if(el) el.textContent=d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
-  document.querySelectorAll('.nav-link').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();navigate(el.dataset.page);}));
-  const ham=$('hamburger'),overlay=$('overlay');
-  if(ham) ham.addEventListener('click',()=>{$('sidebar').classList.toggle('open');overlay.classList.toggle('show');});
-  if(overlay) overlay.addEventListener('click',closeSidebar);
+document.addEventListener('DOMContentLoaded', () => {
+  const el=$('topDate');
+  if (el) el.textContent = new Date().toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'});
+  document.querySelectorAll('.s-link').forEach(el=>el.addEventListener('click',e=>{e.preventDefault();navigate(el.dataset.page);}));
+  const ham=$('hamburger'), ov=$('overlay'), sb=$('sidebar');
+  ham?.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('show');});
+  ov?.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('show');});
   navigate('dashboard');
 });
-function closeSidebar(){$('sidebar').classList.remove('open');$('overlay').classList.remove('show');}
 
-// ============================================================
-// DASHBOARD
-// ============================================================
-function pageDashboard(c){
-  c.innerHTML=`
-    <div class="pg-head">
-      <div><div class="pg-title">Campus Dashboard</div><div class="pg-sub">Lakewood Ridge High School · Academic Year 2024–25</div></div>
-      <div class="pg-actions"><button class="btn btn-ghost btn-sm" id="dashRefresh">${icon(I.refresh,14)} Refresh</button></div>
-    </div>
-    <div id="dashStats" class="stat-row">${[1,2,3,4,5,6].map(()=>statCard('…','…','Loading','blue')).join('')}</div>
-    <div class="g2" style="margin-bottom:18px">
-      <div class="card">
-        <div class="card-head"><div class="card-title">Quick Navigation</div></div>
-        <div class="card-body">${[
-          ['students','b-blue','Student Roster','All enrolled students with absence and tardy counts'],
-          ['absences','b-amber','Absences','Student absence records and makeup time'],
-          ['tardies','b-red','Tardies','Tardy log with consequence levels'],
-          ['behavior','b-purple','Behavior & Conduct','Positive and negative behavior entries'],
-          ['contactlog','b-teal','Contact Log','Parent and student contact records'],
-          ['saturdaysch','b-green','Saturday School','Assignments and attendance tracking'],
-          ['accountlog','b-blue','Accountability Log','Check-in and check-out records'],
-          ['staar','b-green','STAAR Data','State assessment scores and mastery'],
-        ].map(([pg,badge,lbl,desc])=>`<a href="#" data-page="${pg}" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:currentColor" class="${badge}"></span><div style="flex:1"><div style="font-weight:600;font-size:.845rem;color:var(--text-hi)">${lbl}</div><div style="font-size:.75rem;color:var(--text-lo);margin-top:1px">${desc}</div></div>${icon('<polyline points="9 18 15 12 9 6"/>',14)}</a>`).join('')}</div>
+// ==============================================================
+//  DASHBOARD  —  "Big Picture at a Glance"
+// ==============================================================
+function dashboard(c) {
+  c.innerHTML = `
+    <div class="ph">
+      <div>
+        <div class="ph-title">Good morning! Here's your campus overview.</div>
+        <div class="ph-sub">Lakewood Ridge High School &nbsp;·&nbsp; Data refreshes each time you visit a page</div>
       </div>
+      <div class="ph-acts">
+        <button class="btn btn-ghost btn-sm" onclick="navigate('dashboard')">${ic(P.ref,14)} Refresh</button>
+      </div>
+    </div>
+
+    <!-- Big KPI strip -->
+    <div class="kpi-grid" id="d-kpis">
+      ${kpi('Students','…','Enrolled','blue','<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>')}
+      ${kpi('Behavior Entries','…','Logged this year','purple','<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>')}
+      ${kpi('Contacts Logged','…','Parent & student','teal','<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/>')}
+      ${kpi('Saturday School','…','Assigned this year','amber','<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>')}
+      ${kpi('STAAR Passed','…','Biology','green','<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>')}
+      ${kpi('Check-Ins','…','Accountability log','blue','<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>')}
+    </div>
+
+    <div class="g2" style="margin-bottom:18px">
+      <!-- Behavior snapshot -->
       <div class="card">
-        <div class="card-head"><div class="card-title">Quick Add</div><span class="badge b-blue">Log an entry</span></div>
-        <div class="card-body">
-          <p style="font-size:.82rem;color:var(--text-md);margin-bottom:14px">Jump straight to any log form.</p>
-          ${[['contactlog','b-teal','Log a Contact'],['behavior','b-purple','Log Behavior Entry'],['saturdaysch','b-amber','Assign Saturday School'],['accountlog','b-blue','Log Check-In/Out']].map(([pg,badge,lbl])=>`<button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:8px;justify-content:flex-start" onclick="navigate('${pg}')"><span style="width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0" class="${badge}"></span>${lbl}</button>`).join('')}
+        <div class="card-hd">
+          <div><div class="card-title">Behavior Snapshot</div><div class="card-sub">Positive vs. negative entries this year</div></div>
+          <a href="#" data-page="behavior" class="btn btn-ghost btn-sm">View All</a>
+        </div>
+        <div class="card-bd" id="d-beh-snap">${loading()}</div>
+      </div>
+
+      <!-- Quick add shortcuts -->
+      <div class="card">
+        <div class="card-hd"><div class="card-title">Quick Add</div><span class="badge b-blue">Log a new entry</span></div>
+        <div class="card-bd">
+          <p style="font-size:.81rem;color:var(--tx3);margin-bottom:14px">Tap any option below to open the log form for that section.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+            ${[
+              ['contactlog','b-teal','var(--teal)','Log a Contact','Contact Log'],
+              ['behavior','b-purple','var(--purple)','Log Behavior','Behavior & Conduct'],
+              ['saturdaysch','b-amber','var(--amber)','Saturday School','Assign a Student'],
+              ['accountlog','b-blue','var(--blue)','Check-In / Out','Accountability Log'],
+            ].map(([pg,badge,col,lbl,sub])=>`
+              <button onclick="navigate('${pg}')" style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 13px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;transition:all .15s;text-align:left" onmouseover="this.style.borderColor='${col}';this.style.background='#fff'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg)'">
+                <span class="badge ${badge}" style="margin-bottom:2px">${lbl}</span>
+                <span style="font-size:.73rem;color:var(--tx3)">${sub}</span>
+              </button>`).join('')}
+          </div>
         </div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-head"><div class="card-title">Recent Behavior Entries</div><a href="#" data-page="behavior" class="btn btn-ghost btn-sm">View All</a></div>
-      <div id="dashBeh">${loadingHTML('Loading recent behavior entries…')}</div>
-    </div>`;
 
-  Promise.all([fetchSheet(TABS.students),fetchSheet(TABS.behaviorLogs),fetchSheet(TABS.saturdaySchool),fetchSheet(TABS.staar),fetchSheet(TABS.contactLog),fetchSheet(TABS.accountLog)])
-  .then(([stu,beh,sat,staar,con,acc])=>{
-    $('dashStats').innerHTML=
-      statCard('Total Students',stu.rows.length,'Enrolled','blue')+
-      statCard('Behavior Entries',beh.rows.length,'Total logged','purple')+
-      statCard('Saturday School',sat.rows.length,'Assignments','teal')+
-      statCard('Contacts Logged',con.rows.length,'Parent/student contacts','amber')+
-      statCard('STAAR Records',staar.rows.length,'Assessment records','green')+
-      statCard('Check-Ins Logged',acc.rows.length,'Accountability log','blue');
-    const recent=beh.rows.slice(-8).reverse();
-    $('dashBeh').innerHTML=recent.length?renderTable(recent,[
-      {key:beh.cols[0],label:'Student ID'},
-      {key:beh.cols[1],label:'Date',fmt:fmtDate},
-      {key:beh.cols[2],label:'Type',fmt:v=>{const t=String(v||'');return`<span class="badge ${t.toLowerCase().includes('pos')?'b-green':'b-red'}">${t||'—'}</span>`;}},
-      {key:beh.cols[3],label:'Notes'},
-    ]):`<div style="padding:20px;color:var(--text-lo);font-size:.845rem">No behavior entries yet.</div>`;
-  }).catch(e=>{ $('dashStats').innerHTML=errorHTML('Could not load data. Make sure the Google Sheet is set to "Anyone with the link can view." Error: '+e.message); });
+    <!-- Recent behavior table -->
+    <div class="card" style="margin-bottom:18px">
+      <div class="card-hd">
+        <div><div class="card-title">Recent Behavior Entries</div><div class="card-sub">Latest 8 entries from the behavior log</div></div>
+        <a href="#" data-page="behavior" class="btn btn-ghost btn-sm">View full log →</a>
+      </div>
+      <div id="d-beh-table">${loading()}</div>
+    </div>
 
-  $('dashRefresh')?.addEventListener('click',()=>navigate('dashboard'));
+    <!-- Nav cards -->
+    <div class="sec-label">All Sections</div>
+    <div class="g-auto">
+      ${[
+        ['students',   'blue',  '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>',  'Student Roster',    'All enrolled students with absence and tardy totals'],
+        ['absences',   'amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>', 'Absences', 'Absence records and makeup time tracking'],
+        ['tardies',    'red',   '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',                'Tardies',           'Tardy counts and consequence levels'],
+        ['staar',      'green', '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>','STAAR Data','Assessment scores and mastery breakdown'],
+        ['behavior',   'purple','<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',                            'Behavior & Conduct','Log and review all conduct entries'],
+        ['contactlog', 'teal',  '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/>','Contact Log','Parent and student contact records'],
+        ['saturdaysch','amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/>','Saturday School','Assignments and attendance confirmations'],
+        ['accountlog', 'blue',  '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>','Accountability Log','Check-in and check-out time records'],
+        ['analytics',  'green', '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>','Analytics & Reports','Campus-wide summaries from all data'],
+      ].map(([pg,col,ico,lbl,desc])=>`
+        <a href="#" data-page="${pg}" style="display:flex;align-items:flex-start;gap:13px;padding:16px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r);box-shadow:var(--sh0);transition:all .15s;text-decoration:none" onmouseover="this.style.borderColor='var(--border-md)';this.style.boxShadow='var(--sh1)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='var(--sh0)';this.style.transform='none'">
+          <div style="width:38px;height:38px;border-radius:9px;background:var(--${col}-lo);color:var(--${col});display:flex;align-items:center;justify-content:center;flex-shrink:0">${ic(ico,18)}</div>
+          <div><div style="font-weight:700;font-size:.88rem;color:var(--tx1);margin-bottom:3px">${lbl}</div><div style="font-size:.76rem;color:var(--tx3);line-height:1.45">${desc}</div></div>
+        </a>`).join('')}
+    </div>
+  `;
+
+  // Load data
+  Promise.all([
+    fetchSheet(TABS.students),
+    fetchSheet(TABS.behavior),
+    fetchSheet(TABS.contacts),
+    fetchSheet(TABS.saturday),
+    fetchSheet(TABS.staar),
+    fetchSheet(TABS.checkin),
+  ]).then(([stu,beh,con,sat,staar,chk]) => {
+    // KPIs
+    const passed = staar.rows.filter(r=>String(r['Biology Status']||'')==='Passed').length;
+    const kpis = $('d-kpis');
+    if (kpis) kpis.innerHTML =
+      kpi('Students', stu.rows.length, 'Currently enrolled', 'blue', '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>') +
+      kpi('Behavior Entries', beh.rows.length, 'Total logged', 'purple', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>') +
+      kpi('Contacts Logged', con.rows.length, 'Parent & student', 'teal', '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/>') +
+      kpi('Saturday School', sat.rows.length, 'Assigned this year', 'amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>') +
+      kpi('STAAR Passed', `${passed}/${staar.rows.length}`, 'Biology assessment', 'green', '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>') +
+      kpi('Check-Ins', chk.rows.length, 'Accountability log', 'blue', '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>');
+
+    // Behavior snapshot
+    const pos = beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('pos'));
+    const neg = beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('neg'));
+    const snap = $('d-beh-snap');
+    if (snap) snap.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <div style="text-align:center;padding:16px;background:var(--green-lo);border-radius:var(--rs)">
+          <div class="big-num" style="color:var(--green)">${pos.length}</div>
+          <div class="big-lbl" style="color:var(--green)">Positive</div>
+        </div>
+        <div style="text-align:center;padding:16px;background:var(--red-lo);border-radius:var(--rs)">
+          <div class="big-num" style="color:var(--red)">${neg.length}</div>
+          <div class="big-lbl" style="color:var(--red)">Negative</div>
+        </div>
+      </div>
+      ${progRow('Positive Recognitions', pos.length, beh.rows.length, 'var(--green)')}
+      ${progRow('Negative Referrals',    neg.length, beh.rows.length, 'var(--red)')}
+    `;
+
+    // Recent behavior table
+    const recent = beh.rows.slice(-8).reverse();
+    const btEl = $('d-beh-table');
+    if (btEl) btEl.innerHTML = table(recent, [
+      { key: beh.cols[0], label: 'Student ID' },
+      { key: beh.cols[1], label: 'Date', fmt: fmtDate },
+      { key: beh.cols[2], label: 'Type', fmt: v => { const t=String(v||''); const cls=t.toLowerCase().includes('pos')?'b-green':'b-red'; return `<span class="badge ${cls}">${t||'—'}</span>`; }},
+      { key: beh.cols[3], label: 'Notes' },
+    ]);
+  }).catch(e => {
+    const k=$('d-kpis'); if(k) k.innerHTML=errBox('Could not load data. Make sure the Google Sheet is set to "Anyone with the link can view." ' + e.message);
+  });
 }
 
-// ============================================================
-// STUDENTS
-// ============================================================
-function pageStudents(c){
+// ==============================================================
+//  STUDENT ROSTER
+// ==============================================================
+function students(c) {
   c.innerHTML=`
-    <div class="pg-head"><div><div class="pg-title">Student Roster</div><div class="pg-sub">Live from your Google Sheet · All Students - Raw Data</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="stuR">${icon(I.refresh,14)} Refresh</button></div></div>
-    <div class="card" style="margin-bottom:18px"><div class="card-body"><div class="search-row"><div class="search-field">${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="stuQ" placeholder="Search name or ID…"/></div><select class="sel" id="stuG"><option value="">All Grades</option><option>9</option><option>10</option><option>11</option><option>12</option></select><button class="btn btn-ghost btn-sm" id="stuRst">Reset</button></div></div></div>
-    <div id="stuStats" class="stat-row">${statCard('…','…','Loading','blue')}</div>
-    <div class="card"><div class="card-head"><div class="card-title">Student Directory</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="stuT">${loadingHTML()}</div></div>`;
-  let all=[],cols=[];
-  fetchSheet(TABS.students).then(d=>{all=d.rows;cols=d.cols;render(all);
-    const avgA=(all.map(r=>parseFloat(r.ABSENCES||0)).reduce((a,b)=>a+b,0)/Math.max(all.length,1)).toFixed(1);
-    const avgT=(all.map(r=>parseFloat(r.TARDIES||0)).reduce((a,b)=>a+b,0)/Math.max(all.length,1)).toFixed(1);
-    $('stuStats').innerHTML=statCard('Total Students',all.length,'Enrolled','blue')+statCard('Avg Absences',avgA,'Per student','amber')+statCard('Avg Tardies',avgT,'Per student','red')+statCard('Grade Levels','4','9th–12th','teal');
-  }).catch(()=>$('stuT').innerHTML=errorHTML('Could not load student data.'));
-  function render(rows){$('stuT').innerHTML=renderTable(rows,[{key:'STUDENT_ID',label:'Student ID'},{key:'STUDENT_NAME',label:'Name'},{key:'GRADE',label:'Grade',fmt:v=>v!=null?`Gr. ${v}`:'—'},{key:'STUDENT_EMAIL',label:'Email'},{key:'INSTRUCTOR',label:'Instructor'},{key:'ABSENCES',label:'Absences',fmt:v=>v??'0'},{key:'TARDIES',label:'Tardies',fmt:v=>v??'0'}]);}
-  function filter(){const q=($('stuQ')?.value||'').toLowerCase(),g=$('stuG')?.value||'';render(all.filter(r=>(!q||String(r.STUDENT_NAME||'').toLowerCase().includes(q)||String(r.STUDENT_ID||'').toLowerCase().includes(q))&&(!g||String(r.GRADE||'')===g)));}
-  $('stuQ')?.addEventListener('input',filter);
-  $('stuG')?.addEventListener('change',filter);
-  $('stuRst')?.addEventListener('click',()=>{if($('stuQ'))$('stuQ').value='';if($('stuG'))$('stuG').value='';render(all);});
-  $('stuR')?.addEventListener('click',()=>navigate('students'));
+    <div class="ph"><div><div class="ph-title">Student Roster</div><div class="ph-sub">All enrolled students · Live from Google Sheets</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="navigate('students')">${ic(P.ref,14)} Refresh</button></div></div>
+    <div class="card" style="margin-bottom:16px"><div class="card-bd">
+      <div class="search-row">
+        <div class="sf">${ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="sq" placeholder="Search by name or student ID…"/></div>
+        <select class="sel" id="sg"><option value="">All Grades</option><option>9</option><option>10</option><option>11</option><option>12</option></select>
+        <button class="btn btn-ghost btn-sm" id="sRst">Reset</button>
+      </div>
+    </div></div>
+    <div class="kpi-grid" id="s-kpis">${loading()}</div>
+    <div class="card"><div class="card-hd"><div class="card-title">Student Directory</div><span class="badge b-green">Live Data</span></div><div id="s-tbl">${loading()}</div></div>`;
+
+  let all=[], cols=[];
+  fetchSheet(TABS.students).then(d=>{
+    all=d.rows; cols=d.cols;
+    const avgA=(all.reduce((s,r)=>s+parseFloat(r.ABSENCES||0),0)/Math.max(all.length,1)).toFixed(1);
+    const avgT=(all.reduce((s,r)=>s+parseFloat(r.TARDIES||0),0)/Math.max(all.length,1)).toFixed(1);
+    $('s-kpis').innerHTML=
+      kpi('Total Students', all.length, 'Currently enrolled', 'blue') +
+      kpi('Avg. Absences', avgA, 'Per student', 'amber') +
+      kpi('Avg. Tardies', avgT, 'Per student', 'red') +
+      kpi('Grade Levels', '4', '9th – 12th grade', 'teal');
+    render(all);
+  }).catch(e=>$('s-kpis').innerHTML=errBox(e.message));
+
+  function render(rows) {
+    $('s-tbl').innerHTML = table(rows, [
+      {key:'STUDENT_ID',    label:'Student ID'},
+      {key:'STUDENT_NAME',  label:'Name'},
+      {key:'GRADE',         label:'Grade', fmt:v=>v!=null?`Grade ${v}`:'—'},
+      {key:'STUDENT_EMAIL', label:'Email'},
+      {key:'INSTRUCTOR',    label:'Instructor'},
+      {key:'ABSENCES',      label:'Absences', fmt:v=>{const n=parseFloat(v||0);return`<span class="badge ${n>=8?'b-red':n>=4?'b-amber':'b-green'}">${n}</span>`;}},
+      {key:'TARDIES',       label:'Tardies',  fmt:v=>{const n=parseFloat(v||0);return`<span class="badge ${n>=5?'b-red':n>=3?'b-amber':'b-green'}">${n}</span>`;}},
+    ]);
+  }
+  function filter() {
+    const q=($('sq')?.value||'').toLowerCase(), g=$('sg')?.value||'';
+    render(all.filter(r=>(!q||String(r.STUDENT_NAME||'').toLowerCase().includes(q)||String(r.STUDENT_ID||'').toLowerCase().includes(q))&&(!g||String(r.GRADE||'')===g)));
+  }
+  $('sq')?.addEventListener('input',filter);
+  $('sg')?.addEventListener('change',filter);
+  $('sRst')?.addEventListener('click',()=>{$('sq').value='';$('sg').value='';render(all);});
 }
 
-// ============================================================
-// ABSENCES
-// ============================================================
-function pageAbsences(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Absences</div><div class="pg-sub">Absence records and makeup time tracking</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="absR">${icon(I.refresh,14)} Refresh</button></div></div>
-    ${alertBanner('amber','Absence Hours Policy','Students may owe makeup time based on absences over the threshold. "Hours Needed" shows time owed.')}
-    <div id="absStats" class="stat-row">${statCard('…','…','Loading','amber')}</div>
-    <div class="card"><div class="card-body" style="padding-bottom:0"><div class="search-row"><div class="search-field">${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="absQ" placeholder="Search student ID…"/></div></div></div>
-    <div class="card-head" style="background:var(--bg-card)"><div class="card-title">Absence Records</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="absT">${loadingHTML()}</div></div>`;
-  let all=[],cols=[];
-  fetchSheet(TABS.absences).then(d=>{all=d.rows;cols=d.cols;render(all);
-    $('absStats').innerHTML=statCard('Total Records',all.length,'In absence log','amber')+statCard('With Absences',all.filter(r=>(r['ABSENCES']||0)>0).length,'Students w/ 1+','red');
-  }).catch(()=>$('absT').innerHTML=errorHTML('Could not load absence data.'));
-  function render(rows){$('absT').innerHTML=renderTable(rows,[{key:'STUDENT ID',label:'Student ID'},{key:'STUDENT NAME',label:'Name'},{key:'GRADE',label:'Grade',fmt:v=>v!=null?`Gr. ${v}`:'—'},{key:'ABSENCES',label:'Total Absences'},{key:'COURSE NAME',label:'Course'},{key:'INSTRUCTOR',label:'Instructor'},{key:'HOURS NEEDED',label:'Hours Needed'},{key:'TIME SERVED',label:'Time Served'}]);}
-  $('absQ')?.addEventListener('input',function(){const q=this.value.toLowerCase();render(all.filter(r=>Object.values(r).some(v=>String(v||'').toLowerCase().includes(q))));});
-  $('absR')?.addEventListener('click',()=>navigate('absences'));
+// ==============================================================
+//  ABSENCES
+// ==============================================================
+function absences(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Absences</div><div class="ph-sub">Student absence records and makeup time tracking</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="navigate('absences')">${ic(P.ref,14)} Refresh</button></div></div>
+    ${banner('amber','Absence Makeup Policy','Students may owe makeup time based on total absences. The "Hours Needed" column shows remaining time owed.')}
+    <div class="kpi-grid" id="ab-kpis">${loading()}</div>
+    <div class="card"><div class="card-hd"><div class="card-title">Absence Records</div><span class="badge b-teal">Live · Google Sheets</span></div>
+    <div class="card-bd" style="padding-bottom:0"><div class="search-row"><div class="sf">${ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input id="abq" type="text" placeholder="Search student ID or name…"/></div></div></div>
+    <div id="ab-tbl">${loading()}</div></div>`;
+
+  let all=[], allCols=[];
+  fetchSheet(TABS.absences).then(d=>{
+    all=d.rows; allCols=d.cols;
+    const withAbs=all.filter(r=>(r['ABSENCES']||0)>0);
+    const hoursOwed=all.filter(r=>(r['HOURS NEEDED']||0)>0);
+    $('ab-kpis').innerHTML=
+      kpi('Total Records', all.length, 'In absence log', 'blue') +
+      kpi('Students w/ Absences', withAbs.length, '1 or more absences', 'amber') +
+      kpi('Owe Makeup Time', hoursOwed.length, 'Hours needed > 0', 'red');
+    render(all);
+  }).catch(e=>$('ab-kpis').innerHTML=errBox(e.message));
+
+  function render(rows) {
+    $('ab-tbl').innerHTML = table(rows,[
+      {key:'STUDENT ID',   label:'Student ID'},
+      {key:'STUDENT NAME', label:'Name'},
+      {key:'GRADE',        label:'Grade', fmt:v=>v!=null?`Gr. ${v}`:'—'},
+      {key:'ABSENCES',     label:'Absences', fmt:v=>{const n=parseFloat(v||0);return`<span class="badge ${n>=8?'b-red':n>=4?'b-amber':'b-green'}">${n}</span>`;}},
+      {key:'COURSE NAME',  label:'Course'},
+      {key:'INSTRUCTOR',   label:'Instructor'},
+      {key:'HOURS NEEDED', label:'Hours Needed'},
+      {key:'TIME SERVED',  label:'Time Served'},
+    ]);
+  }
+  $('abq')?.addEventListener('input',function(){
+    const q=this.value.toLowerCase();
+    render(all.filter(r=>Object.values(r).some(v=>String(v||'').toLowerCase().includes(q))));
+  });
 }
 
-// ============================================================
-// TARDIES
-// ============================================================
-function pageTardies(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Tardies</div><div class="pg-sub">Tardy records and consequence progression</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="tarR">${icon(I.refresh,14)} Refresh</button></div></div>
-    <div id="tarStats" class="stat-row">${statCard('…','…','Loading','red')}</div>
-    <div class="card" style="margin-bottom:18px"><div class="card-head"><div class="card-title">Consequence Chart</div></div><div class="card-body"><div style="display:grid;grid-template-columns:90px 1fr;gap:8px;font-size:.82rem">${[['1st Tardy','Verbal Warning'],['2nd Tardy','Written Warning & Call Home'],['3rd Tardy','All prior + 3 Before/After School Detentions'],['4th Tardy','All prior + Parent Meeting'],['5th+ Tardy','All prior + Office Referral']].map(([t,d])=>`<div style="font-weight:700;color:var(--text-hi)">${t}</div><div style="color:var(--text-md)">${d}</div>`).join('')}</div></div></div>
-    <div class="card"><div class="card-head"><div class="card-title">Tardy Records</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="tarT">${loadingHTML()}</div></div>`;
+// ==============================================================
+//  TARDIES
+// ==============================================================
+function tardies(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Tardies</div><div class="ph-sub">Tardy records and escalating consequence levels</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="navigate('tardies')">${ic(P.ref,14)} Refresh</button></div></div>
+    <div class="card" style="margin-bottom:16px"><div class="card-hd"><div class="card-title">Consequence Progression</div></div>
+    <div class="card-bd"><div class="cons-table">
+      <div class="ct-lbl">1st Tardy</div><div class="ct-val">Verbal Warning</div>
+      <div class="ct-lbl">2nd Tardy</div><div class="ct-val">Written Warning + Call Home</div>
+      <div class="ct-lbl">3rd Tardy</div><div class="ct-val">All prior + 3 Before/After School Detentions</div>
+      <div class="ct-lbl">4th Tardy</div><div class="ct-val">All prior + Parent Meeting</div>
+      <div class="ct-lbl">5th+ Tardy</div><div class="ct-val">All prior + Office Referral</div>
+    </div></div></div>
+    <div class="kpi-grid" id="tr-kpis">${loading()}</div>
+    <div class="card"><div class="card-hd"><div class="card-title">Tardy Records</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="tr-tbl">${loading()}</div></div>`;
+
   fetchSheet(TABS.tardies).then(({cols,rows})=>{
     const valid=rows.filter(r=>Object.values(r).some(v=>v));
-    $('tarStats').innerHTML=statCard('Total Records',valid.length,'In tardy log','red');
-    $('tarT').innerHTML=renderTable(valid,[{key:cols[1]||'Student ID',label:'Student ID'},{key:cols[2]||'Name',label:'Name'},{key:'Tardy',label:'Tardy #'},{key:'Consequence',label:'Consequence'},{key:'Tardies',label:'Total'}]);
-  }).catch(()=>$('tarT').innerHTML=errorHTML('Could not load tardy data.'));
-  $('tarR')?.addEventListener('click',()=>navigate('tardies'));
+    $('tr-kpis').innerHTML=
+      kpi('Total Tardy Records', valid.length, 'In tardy log', 'red') +
+      kpi('At 3rd+ Tardy', valid.filter(r=>(r['Tardies']||0)>=3).length, 'Detention tier', 'amber') +
+      kpi('At 5th+ Tardy', valid.filter(r=>(r['Tardies']||0)>=5).length, 'Referral tier', 'red');
+    $('tr-tbl').innerHTML = table(valid,[
+      {key:cols[1]||'B', label:'Student ID'},
+      {key:cols[2]||'C', label:'Name'},
+      {key:'Tardy',      label:'Tardy #'},
+      {key:'Tardies',    label:'Total Tardies', fmt:v=>{const n=parseFloat(v||0);const cls=n>=5?'b-red':n>=3?'b-amber':n>=2?'b-blue':'b-green';return`<span class="badge ${cls}">${n}</span>`;}},
+      {key:'Consequence',label:'Consequence'},
+    ]);
+  }).catch(e=>$('tr-kpis').innerHTML=errBox(e.message));
 }
 
-// ============================================================
-// BEHAVIOR LOGS  (read + add)
-// ============================================================
-function pageBehavior(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Behavior & Conduct</div><div class="pg-sub">Positive recognitions and conduct referrals</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="behR">${icon(I.refresh,14)} Refresh</button><button class="btn btn-primary btn-sm" id="behA">${icon(I.plus,14)} Log Entry</button></div></div>
-    <div id="behStats" class="stat-row">${statCard('…','…','Loading','purple')}</div>
-    <div class="card"><div class="card-body" style="padding-bottom:0"><div class="search-row"><div class="search-field">${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="behQ" placeholder="Search student ID…"/></div><select class="sel" id="behTp"><option value="">All Types</option><option>Positive</option><option>Negative</option></select></div></div>
-    <div class="card-head" style="background:var(--bg-card)"><div class="card-title">Behavior Log</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="behT">${loadingHTML()}</div></div>`;
-  let all=[],cols=[];
-  function load(){fetchSheet(TABS.behaviorLogs).then(d=>{all=d.rows;cols=d.cols;const pos=all.filter(r=>String(r[cols[2]]||'').toLowerCase().includes('pos'));const neg=all.filter(r=>String(r[cols[2]]||'').toLowerCase().includes('neg'));$('behStats').innerHTML=statCard('Total',all.length,'All entries','purple')+statCard('Positive',pos.length,'Recognitions','green')+statCard('Negative',neg.length,'Referrals','red');render(all);}).catch(()=>$('behT').innerHTML=errorHTML('Could not load behavior data.'));}
-  function render(rows){if(!cols.length)return;$('behT').innerHTML=renderTable(rows,[{key:cols[0],label:'Student ID'},{key:cols[1],label:'Date',fmt:fmtDate},{key:cols[2],label:'Type',fmt:v=>{const t=String(v||'');return`<span class="badge ${t.toLowerCase().includes('pos')?'b-green':'b-red'}">${t||'—'}</span>`;}},{key:cols[3],label:'Notes'},{key:cols[4],label:'Count'}]);}
-  function filter(){const q=($('behQ')?.value||'').toLowerCase(),tp=$('behTp')?.value||'';render(all.filter(r=>(!q||String(r[cols[0]]||'').toLowerCase().includes(q))&&(!tp||String(r[cols[2]]||'')===tp)));}
-  $('behQ')?.addEventListener('input',filter);$('behTp')?.addEventListener('change',filter);$('behR')?.addEventListener('click',load);
-  $('behA')?.addEventListener('click',()=>showModal('Log Behavior Entry',`
-    <div class="form-group"><label>Student ID</label><input class="form-input" id="f_sid" placeholder="e.g. 90000001"/></div>
-    <div class="form-group"><label>Date</label><input class="form-input" id="f_date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
-    <div class="form-group"><label>Entry Type</label><select class="form-input" id="f_type"><option>Positive</option><option>Negative</option></select></div>
-    <div class="form-group"><label>Notes</label><textarea class="form-input" id="f_notes" rows="3" placeholder="Describe the behavior or recognition…"></textarea></div>
-  `,async(body)=>{try{await postToGAS({sheet:'Behavior Logs',row:[$('f_sid').value,$('f_date').value,$('f_type').value,$('f_notes').value,1]});closeModal();showToast('Behavior entry logged!');load();}catch(e){showToast('Could not save. See Connected Data Sources page for setup.','red');$('modalSubmit').disabled=false;$('modalSubmit').innerHTML=icon(I.plus,14)+' Save Entry';}}));
-  load();
-}
-
-// ============================================================
-// CONTACT LOG  (read + add)
-// ============================================================
-function pageContactLog(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Contact Log</div><div class="pg-sub">Parent, guardian, and student contact records</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="conR">${icon(I.refresh,14)} Refresh</button><button class="btn btn-primary btn-sm" id="conA">${icon(I.plus,14)} Log Contact</button></div></div>
-    <div id="conStats" class="stat-row">${statCard('…','…','Loading','teal')}</div>
-    <div class="card"><div class="card-body" style="padding-bottom:0"><div class="search-row"><div class="search-field">${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="conQ" placeholder="Search student ID…"/></div></div></div>
-    <div class="card-head" style="background:var(--bg-card)"><div class="card-title">Contact Records</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="conT">${loadingHTML()}</div></div>`;
-  let all=[];
-  function load(){fetchSheet(TABS.contactLog).then(d=>{all=d.rows;$('conStats').innerHTML=statCard('Total Contacts',all.length,'All logged contacts','teal');render(all);}).catch(()=>$('conT').innerHTML=errorHTML('Could not load contact log.'));}
-  function render(rows){$('conT').innerHTML=renderTable(rows,[{key:'Student ID',label:'Student ID'},{key:'Date of Contact',label:'Date',fmt:fmtDate},{key:'Contact',label:'Contact Type'},{key:'Description',label:'Description'}]);}
-  $('conQ')?.addEventListener('input',function(){render(all.filter(r=>String(r['Student ID']||'').toLowerCase().includes(this.value.toLowerCase())));});
-  $('conR')?.addEventListener('click',load);
-  $('conA')?.addEventListener('click',()=>showModal('Log a Contact',`
-    <div class="form-group"><label>Student ID</label><input class="form-input" id="f_sid" placeholder="e.g. 90000001"/></div>
-    <div class="form-group"><label>Date of Contact</label><input class="form-input" id="f_date" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
-    <div class="form-group"><label>Contact Type</label><select class="form-input" id="f_contact"><option>Parent / Guardian</option><option>Student</option><option>Phone Call</option><option>Email</option><option>In-Person Meeting</option></select></div>
-    <div class="form-group"><label>Description / Notes</label><textarea class="form-input" id="f_desc" rows="3" placeholder="Summarize the contact…"></textarea></div>
-  `,async(body)=>{try{await postToGAS({sheet:'Contact Log',row:[$('f_sid').value,$('f_date').value,$('f_contact').value,$('f_desc').value]});closeModal();showToast('Contact logged!');load();}catch(e){showToast('Could not save. See Connected Data Sources page for setup.','red');$('modalSubmit').disabled=false;$('modalSubmit').innerHTML=icon(I.plus,14)+' Save Entry';}}));
-  load();
-}
-
-// ============================================================
-// SATURDAY SCHOOL  (read + add)
-// ============================================================
-function pageSaturdaySchool(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Saturday School</div><div class="pg-sub">Assignments, reasons, and attendance confirmation</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="satR">${icon(I.refresh,14)} Refresh</button><button class="btn btn-primary btn-sm" id="satA">${icon(I.plus,14)} Assign Student</button></div></div>
-    <div id="satStats" class="stat-row">${statCard('…','…','Loading','teal')}</div>
-    <div class="card"><div class="card-body" style="padding-bottom:0"><div class="search-row"><div class="search-field">${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="satQ" placeholder="Search student ID…"/></div><select class="sel" id="satRsn"><option value="">All Reasons</option><option>Behavior</option><option>Communication Device</option><option>Attendance</option><option>Other</option></select></div></div>
-    <div class="card-head" style="background:var(--bg-card)"><div class="card-title">Saturday School Records</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="satT">${loadingHTML()}</div></div>`;
-  let all=[];
-  function load(){fetchSheet(TABS.saturdaySchool).then(d=>{all=d.rows;const att=all.filter(r=>String(r['Attended']||'').toLowerCase()==='yes').length;$('satStats').innerHTML=statCard('Total',all.length,'Assignments','teal')+statCard('Attended',att,'Confirmed','green')+statCard('Pending',all.length-att,'Not confirmed','amber');render(all);}).catch(()=>$('satT').innerHTML=errorHTML('Could not load Saturday School data.'));}
-  function render(rows){$('satT').innerHTML=renderTable(rows,[{key:'Student ID',label:'Student ID'},{key:'Student Name',label:'Name'},{key:'Grade',label:'Grade'},{key:'Date',label:'Date',fmt:fmtDate},{key:'Reason',label:'Reason'},{key:'Notes',label:'Notes'},{key:'Minutes',label:'Mins'},{key:'Attended',label:'Attended',fmt:v=>{const s=String(v||'—');return`<span class="badge ${s==='Yes'?'b-green':s==='No'?'b-red':'b-amber'}">${s}</span>`;}},{key:'Created By',label:'Assigned By'}]);}
-  function filter(){const q=($('satQ')?.value||'').toLowerCase(),rsn=$('satRsn')?.value||'';render(all.filter(r=>(!q||String(r['Student ID']||'').toLowerCase().includes(q))&&(!rsn||String(r['Reason']||'')===rsn)));}
-  $('satQ')?.addEventListener('input',filter);$('satRsn')?.addEventListener('change',filter);$('satR')?.addEventListener('click',load);
-  $('satA')?.addEventListener('click',()=>showModal('Assign Saturday School',`
-    <div class="form-group"><label>Student ID</label><input class="form-input" id="f_sid" placeholder="e.g. 90000001"/></div>
-    <div class="form-group"><label>Date of Saturday School</label><input class="form-input" id="f_date" type="date"/></div>
-    <div class="form-group"><label>Reason</label><select class="form-input" id="f_reason"><option>Behavior</option><option>Communication Device</option><option>Attendance</option><option>Other</option></select></div>
-    <div class="form-group"><label>Other Reason (if applicable)</label><input class="form-input" id="f_other" placeholder="Describe if Other selected"/></div>
-    <div class="form-group"><label>Notes</label><textarea class="form-input" id="f_notes" rows="2" placeholder="Additional notes…"></textarea></div>
-    <div class="form-group"><label>Minutes Assigned</label><input class="form-input" id="f_mins" type="number" placeholder="e.g. 60"/></div>
-    <div class="form-group"><label>Assigned By (your name or email)</label><input class="form-input" id="f_by" placeholder="your.name@school.edu"/></div>
-  `,async(body)=>{try{await postToGAS({sheet:'Saturday School',row:[$('f_sid').value,$('f_date').value,$('f_reason').value,$('f_other').value,$('f_notes').value,$('f_mins').value,$('f_by').value]});closeModal();showToast('Saturday School entry saved!');load();}catch(e){showToast('Could not save. See Connected Data Sources page for setup.','red');$('modalSubmit').disabled=false;$('modalSubmit').innerHTML=icon(I.plus,14)+' Save Entry';}}));
-  load();
-}
-
-// ============================================================
-// ACCOUNTABILITY LOG  (read + add)
-// ============================================================
-function pageAccountLog(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Accountability Log</div><div class="pg-sub">Student check-in and check-out time tracking</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="accR">${icon(I.refresh,14)} Refresh</button><button class="btn btn-primary btn-sm" id="accA">${icon(I.plus,14)} Log Check-In</button></div></div>
-    <div id="accStats" class="stat-row">${statCard('…','…','Loading','blue')}</div>
-    <div class="card"><div class="card-body" style="padding-bottom:0"><div class="search-row"><div class="search-field">${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="accQ" placeholder="Search student ID…"/></div><select class="sel" id="accSt"><option value="">All Status</option><option>Checked Out</option><option>Checked In</option></select></div></div>
-    <div class="card-head" style="background:var(--bg-card)"><div class="card-title">Check-In / Check-Out Log</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="accT">${loadingHTML()}</div></div>`;
-  let all=[];
-  function load(){fetchSheet(TABS.accountLog).then(d=>{all=d.rows;const out=all.filter(r=>String(r['Status']||'').includes('Out')).length;$('accStats').innerHTML=statCard('Total Entries',all.length,'All records','blue')+statCard('Checked Out',out,'Completed','green')+statCard('Still In',all.length-out,'Active','amber');render(all);}).catch(()=>$('accT').innerHTML=errorHTML('Could not load accountability log.'));}
-  function render(rows){$('accT').innerHTML=renderTable(rows,[{key:'Student ID',label:'Student ID'},{key:'Check-In Time',label:'Check-In',fmt:fmtTime},{key:'Check-Out Time',label:'Check-Out',fmt:fmtTime},{key:'Status',label:'Status',fmt:v=>{const s=String(v||'—');return`<span class="badge ${s.includes('Out')?'b-green':'b-amber'}">${s}</span>`;}},{key:'Total Time',label:'Total Hrs',fmt:v=>v!=null?`${parseFloat(v).toFixed(2)} hrs`:'—'}]);}
-  function filter(){const q=($('accQ')?.value||'').toLowerCase(),st=$('accSt')?.value||'';render(all.filter(r=>(!q||String(r['Student ID']||'').toLowerCase().includes(q))&&(!st||String(r['Status']||'').includes(st))));}
-  $('accQ')?.addEventListener('input',filter);$('accSt')?.addEventListener('change',filter);$('accR')?.addEventListener('click',load);
-  $('accA')?.addEventListener('click',()=>{const now=new Date().toISOString().slice(0,16);showModal('Log Check-In / Check-Out',`
-    <div class="form-group"><label>Student ID</label><input class="form-input" id="f_sid" placeholder="e.g. 90000001"/></div>
-    <div class="form-group"><label>Check-In Time</label><input class="form-input" id="f_in" type="datetime-local" value="${now}"/></div>
-    <div class="form-group"><label>Check-Out Time (leave blank if still checked in)</label><input class="form-input" id="f_out" type="datetime-local"/></div>
-    <div class="form-group"><label>Status</label><select class="form-input" id="f_status"><option>Checked In</option><option>Checked Out</option></select></div>
-  `,async(body)=>{const inT=$('f_in').value,outT=$('f_out').value,hrs=(inT&&outT)?((new Date(outT)-new Date(inT))/3600000).toFixed(2):'';try{await postToGAS({sheet:'Accountability Log',row:[$('f_sid').value,inT,outT,$('f_status').value,hrs]});closeModal();showToast('Check-in logged!');load();}catch(e){showToast('Could not save. See Connected Data Sources page for setup.','red');$('modalSubmit').disabled=false;$('modalSubmit').innerHTML=icon(I.plus,14)+' Save Entry';}});});
-  load();
-}
-
-// ============================================================
-// STAAR
-// ============================================================
-function pageSTAAR(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">STAAR Assessment Data</div><div class="pg-sub">State assessment scores, mastery levels, and pass/fail status</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="stR">${icon(I.refresh,14)} Refresh</button></div></div>
-    <div id="stStats" class="stat-row">${statCard('…','…','Loading','green')}</div>
-    <div class="card"><div class="card-body" style="padding-bottom:0"><div class="search-row"><div class="search-field">${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="stQ" placeholder="Search student ID…"/></div><select class="sel" id="stM"><option value="">All Mastery Levels</option><option>Masters Grade Level</option><option>Meets Grade Level</option><option>Approaches Grade Level</option><option>Did Not Meet</option></select><select class="sel" id="stSt"><option value="">All Status</option><option>Passed</option><option>Failed</option></select></div></div>
-    <div class="card-head" style="background:var(--bg-card)"><div class="card-title">STAAR Records</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="stT">${loadingHTML()}</div></div>`;
-  let all=[];
-  function load(){fetchSheet(TABS.staar).then(d=>{all=d.rows;const passed=all.filter(r=>String(r['Biology Status']||'')==='Passed').length;$('stStats').innerHTML=statCard('Total Records',all.length,'STAAR records','green')+statCard('Passed',passed,'Biology STAAR','teal')+statCard('Did Not Pass',all.length-passed,'Needs support','amber')+statCard('Masters Level',all.filter(r=>String(r['Biology Mastery']||'').includes('Masters')).length,'Highest mastery','blue');render(all);}).catch(()=>$('stT').innerHTML=errorHTML('Could not load STAAR data.'));}
-  function render(rows){$('stT').innerHTML=renderTable(rows,[{key:'STUDENT ID',label:'Student ID'},{key:'Gr',label:'Grade'},{key:'Gender',label:'Gender'},{key:'Economic Disadvantage',label:'Econ. Disadv.'},{key:'SpecEd',label:'Spec. Ed'},{key:'Biology Score',label:'Score'},{key:'Biology Date/Exemption',label:'Test Date'},{key:'Biology Mastery',label:'Mastery',fmt:v=>{const m=String(v||'—'),cls=m.includes('Masters')?'b-green':m.includes('Meets')?'b-blue':m.includes('Approaches')?'b-amber':'b-red';return`<span class="badge ${cls}">${m}</span>`;}},{key:'Biology Status',label:'Status',fmt:v=>{const s=String(v||'—');return`<span class="badge ${s==='Passed'?'b-green':'b-red'}">${s}</span>`;}}]);}
-  function filter(){const q=($('stQ')?.value||'').toLowerCase(),ma=$('stM')?.value||'',st=$('stSt')?.value||'';render(all.filter(r=>(!q||String(r['STUDENT ID']||'').toLowerCase().includes(q))&&(!ma||String(r['Biology Mastery']||'')===ma)&&(!st||String(r['Biology Status']||'')===st)));}
-  $('stQ')?.addEventListener('input',filter);$('stM')?.addEventListener('change',filter);$('stSt')?.addEventListener('change',filter);$('stR')?.addEventListener('click',load);
-  load();
-}
-
-// ============================================================
-// ANALYTICS
-// ============================================================
-function pageAnalytics(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Analytics & Reports</div><div class="pg-sub">Campus-wide summaries from all connected sheets</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="anaR">${icon(I.refresh,14)} Refresh</button></div></div>
-    <div id="anaStats" class="stat-row">${[1,2,3,4,5,6].map(()=>statCard('…','…','Loading','blue')).join('')}</div>
-    <div class="g2" style="margin-bottom:18px">
-      <div class="card"><div class="card-head"><div class="card-title">STAAR Mastery Breakdown</div></div><div id="staarB">${loadingHTML()}</div></div>
-      <div class="card"><div class="card-head"><div class="card-title">Behavior Summary</div></div><div id="behB">${loadingHTML()}</div></div>
+// ==============================================================
+//  STAAR DATA
+// ==============================================================
+function staar(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">STAAR Assessment Data</div><div class="ph-sub">State assessment scores, mastery levels, and status</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="navigate('staar')">${ic(P.ref,14)} Refresh</button></div></div>
+    <div class="kpi-grid" id="st-kpis">${loading()}</div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="card"><div class="card-hd"><div class="card-title">Mastery Breakdown</div></div><div class="card-bd" id="st-mastery">${loading()}</div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Pass / Fail Overview</div></div><div class="card-bd" id="st-pf">${loading()}</div></div>
     </div>
-    <div class="card"><div class="card-head"><div class="card-title">Saturday School — Reasons</div></div><div id="satB">${loadingHTML()}</div></div>`;
+    <div class="card"><div class="card-hd"><div class="card-title">All STAAR Records</div><span class="badge b-teal">Live · Google Sheets</span></div>
+    <div class="card-bd" style="padding-bottom:0"><div class="search-row">
+      <div class="sf">${ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input id="stq" type="text" placeholder="Search student ID…"/></div>
+      <select class="sel" id="stm"><option value="">All Mastery Levels</option><option>Masters Grade Level</option><option>Meets Grade Level</option><option>Approaches Grade Level</option><option>Did Not Meet</option></select>
+      <select class="sel" id="stst"><option value="">All Status</option><option>Passed</option><option>Failed</option></select>
+    </div></div>
+    <div id="st-tbl">${loading()}</div></div>`;
 
-  Promise.all([fetchSheet(TABS.students),fetchSheet(TABS.behaviorLogs),fetchSheet(TABS.saturdaySchool),fetchSheet(TABS.staar),fetchSheet(TABS.contactLog),fetchSheet(TABS.accountLog)])
-  .then(([stu,beh,sat,staar,con,acc])=>{
+  let all=[];
+  fetchSheet(TABS.staar).then(d=>{
+    all=d.rows;
+    const passed=all.filter(r=>String(r['Biology Status']||'')==='Passed');
+    const masters=all.filter(r=>String(r['Biology Mastery']||'').includes('Masters'));
+    const meets  =all.filter(r=>String(r['Biology Mastery']||'').includes('Meets'));
+    const appro  =all.filter(r=>String(r['Biology Mastery']||'').includes('Approaches'));
+    const dnm    =all.filter(r=>String(r['Biology Mastery']||'').includes('Did Not'));
+
+    $('st-kpis').innerHTML=
+      kpi('Total Records', all.length, 'STAAR records', 'green') +
+      kpi('Passed', passed.length, 'Biology STAAR', 'green') +
+      kpi('Did Not Pass', all.length-passed.length, 'Needs support', 'red') +
+      kpi('Masters Level', masters.length, 'Highest mastery', 'blue');
+
+    $('st-mastery').innerHTML=`
+      ${progRow('Masters Grade Level',    masters.length, all.length, 'var(--green)')}
+      ${progRow('Meets Grade Level',      meets.length,   all.length, 'var(--blue)')}
+      ${progRow('Approaches Grade Level', appro.length,   all.length, 'var(--amber)')}
+      ${progRow('Did Not Meet',           dnm.length,     all.length, 'var(--red)')}`;
+
+    $('st-pf').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="text-align:center;padding:20px;background:var(--green-lo);border-radius:var(--rs)">
+          <div class="big-num" style="color:var(--green)">${passed.length}</div>
+          <div class="big-lbl" style="color:var(--green)">Passed</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--red-lo);border-radius:var(--rs)">
+          <div class="big-num" style="color:var(--red)">${all.length-passed.length}</div>
+          <div class="big-lbl" style="color:var(--red)">Did Not Pass</div>
+        </div>
+      </div>`;
+
+    render(all);
+  }).catch(e=>$('st-kpis').innerHTML=errBox(e.message));
+
+  function render(rows) {
+    $('st-tbl').innerHTML=table(rows,[
+      {key:'STUDENT ID', label:'Student ID'},
+      {key:'Gr',         label:'Grade'},
+      {key:'Gender',     label:'Gender'},
+      {key:'Biology Score', label:'Score'},
+      {key:'Biology Date/Exemption', label:'Test Date'},
+      {key:'Biology Mastery', label:'Mastery', fmt:v=>{const m=String(v||'—');const cls=m.includes('Masters')?'b-green':m.includes('Meets')?'b-blue':m.includes('Approaches')?'b-amber':'b-red';return`<span class="badge ${cls}">${m}</span>`;}},
+      {key:'Biology Status', label:'Status', fmt:v=>{const s=String(v||'—');return`<span class="badge ${s==='Passed'?'b-green':'b-red'}">${s}</span>`;}},
+      {key:'SpecEd', label:'Spec. Ed'},
+      {key:'Economic Disadvantage', label:'Econ. Disadv.'},
+    ]);
+  }
+  function filter(){
+    const q=($('stq')?.value||'').toLowerCase(), ma=$('stm')?.value||'', st=$('stst')?.value||'';
+    render(all.filter(r=>(!q||String(r['STUDENT ID']||'').toLowerCase().includes(q))&&(!ma||String(r['Biology Mastery']||'')===ma)&&(!st||String(r['Biology Status']||'')===st)));
+  }
+  $('stq')?.addEventListener('input',filter);$('stm')?.addEventListener('change',filter);$('stst')?.addEventListener('change',filter);
+}
+
+// ==============================================================
+//  BEHAVIOR & CONDUCT  (read + add)
+// ==============================================================
+function behavior(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Behavior &amp; Conduct</div><div class="ph-sub">Positive recognitions and conduct referrals</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="loadBeh()">${ic(P.ref,14)} Refresh</button><button class="btn btn-primary btn-sm" id="beh-add">${ic(P.plus,14)} Log Entry</button></div></div>
+    <div class="kpi-grid" id="beh-kpis">${loading()}</div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="card"><div class="card-hd"><div class="card-title">Positive Recognitions</div></div><div class="card-bd" style="display:flex;align-items:center;justify-content:center;min-height:120px"><div id="beh-pos-big" style="text-align:center"></div></div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Conduct Referrals</div></div><div class="card-bd" style="display:flex;align-items:center;justify-content:center;min-height:120px"><div id="beh-neg-big" style="text-align:center"></div></div></div>
+    </div>
+    <div class="card"><div class="card-hd"><div class="card-title">Behavior Log</div><span class="badge b-teal">Live · Google Sheets</span></div>
+    <div class="card-bd" style="padding-bottom:0"><div class="search-row">
+      <div class="sf">${ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input id="bq" type="text" placeholder="Search student ID…"/></div>
+      <select class="sel" id="btp"><option value="">All Types</option><option>Positive</option><option>Negative</option></select>
+    </div></div>
+    <div id="beh-tbl">${loading()}</div></div>`;
+
+  let all=[], cols=[];
+  window.loadBeh = function() {
+    $('beh-tbl').innerHTML=loading();
+    fetchSheet(TABS.behavior).then(d=>{
+      all=d.rows; cols=d.cols;
+      const pos=all.filter(r=>String(r[cols[2]]||'').toLowerCase().includes('pos'));
+      const neg=all.filter(r=>String(r[cols[2]]||'').toLowerCase().includes('neg'));
+      $('beh-kpis').innerHTML=
+        kpi('Total Entries', all.length, 'All logged', 'purple') +
+        kpi('Positive', pos.length, 'Recognitions', 'green') +
+        kpi('Negative', neg.length, 'Referrals', 'red');
+      $('beh-pos-big').innerHTML=`<div class="big-num" style="color:var(--green)">${pos.length}</div><div class="big-lbl" style="color:var(--green)">Positive Entries</div>`;
+      $('beh-neg-big').innerHTML=`<div class="big-num" style="color:var(--red)">${neg.length}</div><div class="big-lbl" style="color:var(--red)">Referrals Filed</div>`;
+      render(all);
+    }).catch(e=>$('beh-kpis').innerHTML=errBox(e.message));
+  };
+  function render(rows){
+    if(!cols.length) return;
+    $('beh-tbl').innerHTML=table(rows,[
+      {key:cols[0],label:'Student ID'},
+      {key:cols[1],label:'Date',fmt:fmtDate},
+      {key:cols[2],label:'Type',fmt:v=>{const t=String(v||'');const cls=t.toLowerCase().includes('pos')?'b-green':'b-red';return`<span class="badge ${cls}">${t||'—'}</span>`;}},
+      {key:cols[3],label:'Notes'},
+      {key:cols[4],label:'Count'},
+    ]);
+  }
+  function filter(){const q=($('bq')?.value||'').toLowerCase(),tp=$('btp')?.value||'';render(all.filter(r=>(!q||String(r[cols[0]]||'').toLowerCase().includes(q))&&(!tp||String(r[cols[2]]||'')===tp)));}
+  $('bq')?.addEventListener('input',filter);$('btp')?.addEventListener('change',filter);
+  loadBeh();
+
+  $('beh-add')?.addEventListener('click',()=>modal('Log Behavior Entry',`
+    <div class="fg"><label>Student ID</label><input class="fi" id="f1" placeholder="e.g. 90000001"/></div>
+    <div class="fg"><label>Date</label><input class="fi" id="f2" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+    <div class="fg"><label>Entry Type</label><select class="fi" id="f3"><option>Positive</option><option>Negative</option></select></div>
+    <div class="fg"><label>Notes / Description</label><textarea class="fi" id="f4" rows="3" placeholder="Describe the behavior or recognition…"></textarea></div>`,
+    async()=>{
+      try{await postRow('Behavior Logs',[$('f1').value,$('f2').value,$('f3').value,$('f4').value,1]);closeModal();toast('Behavior entry logged!');loadBeh();}
+      catch{toast('Could not save — check Connected Data Sources page for setup steps.','r');$('mSave').disabled=false;$('mSave').innerHTML=ic(P.plus,14)+' Save Entry';}
+    }));
+}
+
+// ==============================================================
+//  CONTACT LOG  (read + add)
+// ==============================================================
+function contactlog(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Contact Log</div><div class="ph-sub">Parent, guardian, and student contact records</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="loadCon()">${ic(P.ref,14)} Refresh</button><button class="btn btn-primary btn-sm" id="con-add">${ic(P.plus,14)} Log Contact</button></div></div>
+    <div class="kpi-grid" id="con-kpis">${loading()}</div>
+    <div class="card"><div class="card-hd"><div class="card-title">Contact Records</div><span class="badge b-teal">Live · Google Sheets</span></div>
+    <div class="card-bd" style="padding-bottom:0"><div class="search-row"><div class="sf">${ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input id="cq" type="text" placeholder="Search by student ID…"/></div></div></div>
+    <div id="con-tbl">${loading()}</div></div>`;
+
+  let all=[];
+  window.loadCon=function(){
+    fetchSheet(TABS.contacts).then(d=>{
+      all=d.rows;
+      $('con-kpis').innerHTML=kpi('Total Contacts', all.length, 'All logged contacts', 'teal');
+      render(all);
+    }).catch(e=>$('con-kpis').innerHTML=errBox(e.message));
+  };
+  function render(rows){$('con-tbl').innerHTML=table(rows,[
+    {key:'Student ID',label:'Student ID'},
+    {key:'Date of Contact',label:'Date',fmt:fmtDate},
+    {key:'Contact',label:'Contact Type'},
+    {key:'Description',label:'Description'},
+  ]);}
+  $('cq')?.addEventListener('input',function(){render(all.filter(r=>String(r['Student ID']||'').toLowerCase().includes(this.value.toLowerCase())));});
+  loadCon();
+
+  $('con-add')?.addEventListener('click',()=>modal('Log a Contact',`
+    <div class="fg"><label>Student ID</label><input class="fi" id="f1" placeholder="e.g. 90000001"/></div>
+    <div class="fg"><label>Date of Contact</label><input class="fi" id="f2" type="date" value="${new Date().toISOString().split('T')[0]}"/></div>
+    <div class="fg"><label>Contact Type</label><select class="fi" id="f3"><option>Parent / Guardian</option><option>Student</option><option>Phone Call</option><option>Email</option><option>In-Person Meeting</option></select></div>
+    <div class="fg"><label>Description / Notes</label><textarea class="fi" id="f4" rows="3" placeholder="Summarize the contact…"></textarea></div>`,
+    async()=>{
+      try{await postRow('Contact Log',[$('f1').value,$('f2').value,$('f3').value,$('f4').value]);closeModal();toast('Contact logged!');loadCon();}
+      catch{toast('Could not save — check Connected Data Sources page.','r');$('mSave').disabled=false;$('mSave').innerHTML=ic(P.plus,14)+' Save Entry';}
+    }));
+}
+
+// ==============================================================
+//  SATURDAY SCHOOL  (read + add)
+// ==============================================================
+function saturdaysch(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Saturday School</div><div class="ph-sub">Assignments, reasons, and attendance confirmations</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="loadSat()">${ic(P.ref,14)} Refresh</button><button class="btn btn-primary btn-sm" id="sat-add">${ic(P.plus,14)} Assign Student</button></div></div>
+    <div class="kpi-grid" id="sat-kpis">${loading()}</div>
+    <div class="card"><div class="card-hd"><div class="card-title">Saturday School Records</div><span class="badge b-teal">Live · Google Sheets</span></div>
+    <div class="card-bd" style="padding-bottom:0"><div class="search-row">
+      <div class="sf">${ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input id="satq" type="text" placeholder="Search student ID…"/></div>
+      <select class="sel" id="satr"><option value="">All Reasons</option><option>Behavior</option><option>Communication Device</option><option>Attendance</option><option>Other</option></select>
+      <select class="sel" id="sata"><option value="">All Status</option><option value="Yes">Attended</option><option value="No">Did Not Attend</option></select>
+    </div></div>
+    <div id="sat-tbl">${loading()}</div></div>`;
+
+  let all=[];
+  window.loadSat=function(){
+    fetchSheet(TABS.saturday).then(d=>{
+      all=d.rows;
+      const att=all.filter(r=>String(r['Attended']||'').toLowerCase()==='yes');
+      $('sat-kpis').innerHTML=
+        kpi('Total Assignments', all.length, 'All records', 'teal') +
+        kpi('Attended', att.length, 'Confirmed attendance', 'green') +
+        kpi('Did Not Attend', all.length-att.length, 'Not confirmed', 'amber');
+      render(all);
+    }).catch(e=>$('sat-kpis').innerHTML=errBox(e.message));
+  };
+  function render(rows){$('sat-tbl').innerHTML=table(rows,[
+    {key:'Student ID',   label:'Student ID'},
+    {key:'Student Name', label:'Name'},
+    {key:'Grade',        label:'Grade'},
+    {key:'Date',         label:'Date',fmt:fmtDate},
+    {key:'Reason',       label:'Reason'},
+    {key:'Notes',        label:'Notes'},
+    {key:'Minutes',      label:'Minutes'},
+    {key:'Attended',     label:'Attended',fmt:v=>{const s=String(v||'—');return`<span class="badge ${s==='Yes'?'b-green':s==='No'?'b-red':'b-gray'}">${s}</span>`;}},
+    {key:'Created By',   label:'Assigned By'},
+  ]);}
+  function filter(){const q=($('satq')?.value||'').toLowerCase(),r=$('satr')?.value||'',a=$('sata')?.value||'';
+    render(all.filter(x=>(!q||String(x['Student ID']||'').toLowerCase().includes(q))&&(!r||String(x['Reason']||'')===r)&&(!a||String(x['Attended']||'')===a)));}
+  $('satq')?.addEventListener('input',filter);$('satr')?.addEventListener('change',filter);$('sata')?.addEventListener('change',filter);
+  loadSat();
+
+  $('sat-add')?.addEventListener('click',()=>modal('Assign Saturday School',`
+    <div class="fg"><label>Student ID</label><input class="fi" id="f1" placeholder="e.g. 90000001"/></div>
+    <div class="fg"><label>Date of Saturday School</label><input class="fi" id="f2" type="date"/></div>
+    <div class="fg"><label>Reason</label><select class="fi" id="f3"><option>Behavior</option><option>Communication Device</option><option>Attendance</option><option>Other</option></select></div>
+    <div class="fg"><label>Other Reason (if applicable)</label><input class="fi" id="f4" placeholder="Describe if Other selected"/></div>
+    <div class="fg"><label>Notes</label><textarea class="fi" id="f5" rows="2" placeholder="Additional notes…"></textarea></div>
+    <div class="fg"><label>Minutes Assigned</label><input class="fi" id="f6" type="number" placeholder="e.g. 60"/></div>
+    <div class="fg"><label>Assigned By (your name or email)</label><input class="fi" id="f7" placeholder="your.email@school.edu"/></div>`,
+    async()=>{
+      try{await postRow('Saturday School',[$('f1').value,$('f2').value,$('f3').value,$('f4').value,$('f5').value,$('f6').value,$('f7').value]);closeModal();toast('Saturday School entry saved!');loadSat();}
+      catch{toast('Could not save — check Connected Data Sources page.','r');$('mSave').disabled=false;$('mSave').innerHTML=ic(P.plus,14)+' Save Entry';}
+    }));
+}
+
+// ==============================================================
+//  ACCOUNTABILITY LOG  (read + add)
+// ==============================================================
+function accountlog(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Accountability Log</div><div class="ph-sub">Student check-in and check-out time tracking</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="loadAcc()">${ic(P.ref,14)} Refresh</button><button class="btn btn-primary btn-sm" id="acc-add">${ic(P.plus,14)} Log Check-In</button></div></div>
+    <div class="kpi-grid" id="acc-kpis">${loading()}</div>
+    <div class="card"><div class="card-hd"><div class="card-title">Check-In / Check-Out Log</div><span class="badge b-teal">Live · Google Sheets</span></div>
+    <div class="card-bd" style="padding-bottom:0"><div class="search-row">
+      <div class="sf">${ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input id="acq" type="text" placeholder="Search student ID…"/></div>
+      <select class="sel" id="acst"><option value="">All Status</option><option>Checked Out</option><option>Checked In</option></select>
+    </div></div>
+    <div id="acc-tbl">${loading()}</div></div>`;
+
+  let all=[];
+  window.loadAcc=function(){
+    fetchSheet(TABS.checkin).then(d=>{
+      all=d.rows;
+      const out=all.filter(r=>String(r['Status']||'').includes('Out'));
+      $('acc-kpis').innerHTML=
+        kpi('Total Entries', all.length, 'All records', 'blue') +
+        kpi('Checked Out', out.length, 'Completed sessions', 'green') +
+        kpi('Still Checked In', all.length-out.length, 'Active sessions', 'amber');
+      render(all);
+    }).catch(e=>$('acc-kpis').innerHTML=errBox(e.message));
+  };
+  function render(rows){$('acc-tbl').innerHTML=table(rows,[
+    {key:'Student ID',    label:'Student ID'},
+    {key:'Check-In Time', label:'Check-In',  fmt:fmtDateTime},
+    {key:'Check-Out Time',label:'Check-Out', fmt:fmtDateTime},
+    {key:'Status',        label:'Status', fmt:v=>{const s=String(v||'—');return`<span class="badge ${s.includes('Out')?'b-green':'b-amber'}">${s}</span>`;}},
+    {key:'Total Time',    label:'Total Hrs', fmt:v=>v!=null?`${parseFloat(v).toFixed(2)} hrs`:'—'},
+  ]);}
+  function filter(){const q=($('acq')?.value||'').toLowerCase(),st=$('acst')?.value||'';
+    render(all.filter(r=>(!q||String(r['Student ID']||'').toLowerCase().includes(q))&&(!st||String(r['Status']||'').includes(st))));}
+  $('acq')?.addEventListener('input',filter);$('acst')?.addEventListener('change',filter);
+  loadAcc();
+
+  $('acc-add')?.addEventListener('click',()=>{
+    const now=new Date().toISOString().slice(0,16);
+    modal('Log Check-In / Check-Out',`
+      <div class="fg"><label>Student ID</label><input class="fi" id="f1" placeholder="e.g. 90000001"/></div>
+      <div class="fg"><label>Check-In Date &amp; Time</label><input class="fi" id="f2" type="datetime-local" value="${now}"/></div>
+      <div class="fg"><label>Check-Out Date &amp; Time (leave blank if still checked in)</label><input class="fi" id="f3" type="datetime-local"/></div>
+      <div class="fg"><label>Status</label><select class="fi" id="f4"><option>Checked In</option><option>Checked Out</option></select></div>`,
+      async()=>{
+        const inT=$('f2').value, outT=$('f3').value;
+        const hrs=(inT&&outT)?((new Date(outT)-new Date(inT))/3600000).toFixed(2):'';
+        try{await postRow('Accountability Log',[$('f1').value,inT,outT,$('f4').value,hrs]);closeModal();toast('Check-in logged!');loadAcc();}
+        catch{toast('Could not save — check Connected Data Sources page.','r');$('mSave').disabled=false;$('mSave').innerHTML=ic(P.plus,14)+' Save Entry';}
+      });
+  });
+}
+
+// ==============================================================
+//  ANALYTICS
+// ==============================================================
+function analytics(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Analytics &amp; Reports</div><div class="ph-sub">Campus-wide summaries built automatically from all your data</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="navigate('analytics')">${ic(P.ref,14)} Refresh All</button></div></div>
+    <div class="kpi-grid" id="ana-kpis">${loading()}</div>
+    <div class="g2" style="margin-bottom:16px">
+      <div class="card"><div class="card-hd"><div class="card-title">Behavior Overview</div></div><div class="card-bd" id="ana-beh">${loading()}</div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">STAAR Mastery Levels</div></div><div class="card-bd" id="ana-staar">${loading()}</div></div>
+    </div>
+    <div class="g2">
+      <div class="card"><div class="card-hd"><div class="card-title">Saturday School — Reasons</div></div><div class="card-bd" id="ana-sat">${loading()}</div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Saturday School — Attendance</div></div><div class="card-bd" id="ana-satatt">${loading()}</div></div>
+    </div>`;
+
+  Promise.all([
+    fetchSheet(TABS.students),
+    fetchSheet(TABS.behavior),
+    fetchSheet(TABS.saturday),
+    fetchSheet(TABS.staar),
+    fetchSheet(TABS.contacts),
+    fetchSheet(TABS.checkin),
+  ]).then(([stu,beh,sat,staar,con,chk])=>{
     const pos=beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('pos'));
     const neg=beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('neg'));
     const passed=staar.rows.filter(r=>String(r['Biology Status']||'')==='Passed');
-    $('anaStats').innerHTML=statCard('Students',stu.rows.length,'Enrolled','blue')+statCard('Behavior Entries',beh.rows.length,'Total','purple')+statCard('Recognitions',pos.length,'Positive','green')+statCard('Saturday School',sat.rows.length,'Assignments','teal')+statCard('Contacts',con.rows.length,'Logged','amber')+statCard('STAAR Passed',`${passed.length}/${staar.rows.length}`,'Biology','green');
-    const mastery={};staar.rows.forEach(r=>{const m=String(r['Biology Mastery']||'Unknown');mastery[m]=(mastery[m]||0)+1;});
-    const mColors={'Masters Grade Level':'b-green','Meets Grade Level':'b-blue','Approaches Grade Level':'b-amber'};
-    $('staarB').innerHTML=`<div class="card-body">`+Object.entries(mastery).map(([m,cnt])=>{const pct=staar.rows.length?Math.round(cnt/staar.rows.length*100):0,cls=mColors[m]||'b-red',col=cls.includes('green')?'var(--green)':cls.includes('blue')?'var(--accent)':cls.includes('amber')?'var(--amber)':'var(--red)';return`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span class="badge ${cls}">${m}</span><span style="font-size:.82rem;font-weight:600;color:var(--text-hi)">${cnt} (${pct}%)</span></div><div class="prog"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div></div>`;}).join('')+`</div>`;
-    $('behB').innerHTML=`<div class="card-body">`+[['Positive Recognitions',pos.length,'b-green','var(--green)'],['Negative Referrals',neg.length,'b-red','var(--red)']].map(([lbl,cnt,cls,col])=>{const pct=beh.rows.length?Math.round(cnt/beh.rows.length*100):0;return`<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:5px"><span class="badge ${cls}">${lbl}</span><span style="font-size:.82rem;font-weight:600;color:var(--text-hi)">${cnt} (${pct}%)</span></div><div class="prog"><div class="prog-fill" style="width:${pct}%;background:${col}"></div></div></div>`;}).join('')+`</div>`;
+
+    $('ana-kpis').innerHTML=
+      kpi('Students',     stu.rows.length, 'Enrolled',         'blue') +
+      kpi('Behavior',     beh.rows.length, 'Total entries',     'purple') +
+      kpi('Recognitions', pos.length,       'Positive entries',  'green') +
+      kpi('Sat. School',  sat.rows.length, 'Assignments',       'amber') +
+      kpi('Contacts',     con.rows.length, 'All contacts',      'teal') +
+      kpi('STAAR Passed', `${passed.length}/${staar.rows.length}`, 'Biology', 'green');
+
+    // Behavior
+    $('ana-beh').innerHTML=
+      progRow('Positive Recognitions', pos.length, beh.rows.length, 'var(--green)') +
+      progRow('Negative Referrals',    neg.length, beh.rows.length, 'var(--red)') +
+      `<div style="margin-top:10px;padding:12px;background:var(--bg);border-radius:var(--rs);text-align:center">
+        <span style="font-size:.8rem;color:var(--tx3)">Positive rate: </span>
+        <span style="font-weight:700;color:var(--green)">${beh.rows.length?Math.round(pos.length/beh.rows.length*100):0}%</span>
+      </div>`;
+
+    // STAAR mastery
+    const levels=['Masters Grade Level','Meets Grade Level','Approaches Grade Level','Did Not Meet'];
+    const colors=['var(--green)','var(--blue)','var(--amber)','var(--red)'];
+    $('ana-staar').innerHTML=levels.map((l,i)=>{
+      const cnt=staar.rows.filter(r=>String(r['Biology Mastery']||'').includes(l.split(' ')[0])).length;
+      return progRow(l,cnt,staar.rows.length,colors[i]);
+    }).join('');
+
+    // Saturday school reasons
     const reasons={};sat.rows.forEach(r=>{const re=String(r['Reason']||'Other');reasons[re]=(reasons[re]||0)+1;});
-    $('satB').innerHTML=`<div class="card-body">`+Object.entries(reasons).sort((a,b)=>b[1]-a[1]).map(([r,cnt])=>{const pct=sat.rows.length?Math.round(cnt/sat.rows.length*100):0;return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:.82rem;font-weight:500;color:var(--text-hi)">${r}</span><span style="font-size:.82rem;color:var(--text-lo)">${cnt} (${pct}%)</span></div><div class="prog"><div class="prog-fill" style="width:${pct}%;background:var(--teal)"></div></div></div>`;}).join('')+`</div>`;
-  }).catch(e=>$('anaStats').innerHTML=errorHTML('Could not load analytics: '+e.message));
-  $('anaR')?.addEventListener('click',()=>navigate('analytics'));
+    $('ana-sat').innerHTML=Object.entries(reasons).sort((a,b)=>b[1]-a[1]).map(([r,n])=>progRow(r,n,sat.rows.length,'var(--teal)')).join('')||'<div class="empty">No data.</div>';
+
+    // Saturday attendance
+    const att=sat.rows.filter(r=>String(r['Attended']||'').toLowerCase()==='yes').length;
+    $('ana-satatt').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div style="text-align:center;padding:18px;background:var(--green-lo);border-radius:var(--rs)">
+          <div class="big-num" style="color:var(--green)">${att}</div>
+          <div class="big-lbl" style="color:var(--green)">Attended</div>
+        </div>
+        <div style="text-align:center;padding:18px;background:var(--red-lo);border-radius:var(--rs)">
+          <div class="big-num" style="color:var(--red)">${sat.rows.length-att}</div>
+          <div class="big-lbl" style="color:var(--red)">Did Not Attend</div>
+        </div>
+      </div>
+      ${progRow('Attendance Rate', att, sat.rows.length, 'var(--green)')}`;
+
+  }).catch(e=>$('ana-kpis').innerHTML=errBox(e.message));
 }
 
-// ============================================================
-// CONNECTED DATA SOURCES
-// ============================================================
-function pageIntegrations(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Connected Data Sources</div><div class="pg-sub">Your Google Sheet powers everything you see in this portal</div></div></div>
-    ${alertBanner('green','Your Google Sheet is live','This portal reads directly from your Google Sheet. All data shown across every page is pulled live — no manual uploads needed.')}
-    <div class="section-label" style="margin-top:8px">Connected Spreadsheet</div>
-    <div class="card" style="margin-bottom:20px"><div class="card-body">
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <div style="width:48px;height:48px;background:#e6f4ea;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0">📊</div>
-        <div style="flex:1"><div style="font-weight:700;font-size:.95rem;color:var(--text-hi)">Student Data Workbook</div><div style="font-size:.78rem;color:var(--text-lo);margin-top:3px">Sheet ID: ${SHEET_ID}</div></div>
-        <span class="badge b-green">● Live Connection</span>
+// ==============================================================
+//  CONNECTED DATA SOURCES
+// ==============================================================
+function integrations(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Connected Data Sources</div><div class="ph-sub">Your Google Sheet powers everything in this portal</div></div></div>
+    ${banner('green','Your Google Sheet is connected','All data shown in this portal is pulled live from your spreadsheet. No manual uploads needed — it refreshes every time you visit a page.')}
+    <div class="sec-label" style="margin-top:8px">Your Connected Spreadsheet</div>
+    <div class="card" style="margin-bottom:20px"><div class="card-bd">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+        <div style="width:50px;height:50px;background:#E8F5E9;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0">📊</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:.95rem;color:var(--tx1)">Student Data Workbook</div><div style="font-size:.76rem;color:var(--tx3);margin-top:3px">ID: ${SHEET_ID}</div></div>
+        <span class="badge b-green">● Live</span>
       </div>
       <div class="divider"></div>
-      <div style="font-size:.78rem;font-weight:600;color:var(--text-lo);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px">Connected Tabs (Read)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${Object.values(TABS).map(v=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span class="badge b-teal">●</span><span style="color:var(--text-hi);font-size:.82rem;font-weight:500">${v}</span></div>`).join('')}</div>
-      <div class="divider"></div>
-      <div style="font-size:.78rem;font-weight:600;color:var(--text-lo);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px">Write-Enabled Tabs (Add records)</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">${['Contact Log','Behavior Logs','Saturday School','Accountability Log'].map(v=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span class="badge ${GAS_URL==='YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'?'b-amber':'b-green'}">●</span><span style="color:var(--text-hi);font-size:.82rem;font-weight:500">${v}</span></div>`).join('')}</div>
-      ${GAS_URL==='YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'?`<div style="margin-top:12px;padding:12px;background:#FFFBEB;border-radius:8px;font-size:.82rem;color:var(--amber)"><strong>Write access is in demo mode.</strong> New entries simulate saving but do not write to the sheet yet. Follow the steps below to enable full write access.</div>`:''}
+      <div style="font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--tx4);margin-bottom:10px">Connected Sheet Tabs</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        ${Object.values(TABS).map(v=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span class="badge b-green" style="padding:2px 6px">●</span><span style="font-size:.82rem;font-weight:500;color:var(--tx1)">${v}</span></div>`).join('')}
+      </div>
     </div></div>
-    <div class="section-label">Enable Write Access — One-Time Setup</div>
-    <div class="card">${[['Open Google Apps Script','Go to script.google.com. Click "New Project" and give it a name like "LandPage SIS Writer."'],['Paste the provided script','Copy the Apps Script code that Nexaflow provides and paste it into the editor. Click Save.'],['Deploy as a Web App','Click Deploy → New Deployment → Web App. Set "Who has access" to Anyone. Click Deploy and copy the URL shown.'],['Add the URL to your portal','Open app.js and paste your URL in the GAS_URL field at the very top of the file. Save and redeploy. All log forms will now write directly to your Google Sheet.']].map(([h,b],i)=>`<div class="guide-step"><div class="guide-num">${i+1}</div><div><div class="guide-head">${h}</div><div class="guide-body">${b}</div></div></div>`).join('')}</div>`;
+    <div class="sec-label">Enable Saving New Records (One-Time Setup)</div>
+    <div class="card">${[
+      ['Open Google Apps Script','Go to script.google.com and start a new project. Give it a name like "LandPage SIS."'],
+      ['Paste the write script','Copy the script code provided by your Nexaflow administrator and paste it into the editor. Save the file.'],
+      ['Deploy as a Web App','Click Deploy → New Deployment → Web App. Set "Execute as: Me" and "Who has access: Anyone." Click Deploy and copy the URL.'],
+      ['Connect it to the portal','Share the URL with your Nexaflow admin to add it to the portal. All log forms — Behavior, Contact, Saturday School, and Accountability — will then write directly to your Google Sheet.'],
+    ].map(([h,b],i)=>`<div class="guide-step"><div class="g-num">${i+1}</div><div><div class="g-head">${h}</div><div class="g-body">${b}</div></div></div>`).join('')}
+    <div style="padding:14px 18px;background:var(--amber-lo);border-top:1px solid var(--border)"><div style="font-size:.8rem;font-weight:700;color:var(--amber);margin-bottom:2px">Currently in Demo Mode</div><div style="font-size:.77rem;color:var(--tx2)">The Save buttons work and show a confirmation, but new entries won't be written to your sheet until the Apps Script is set up. Reading data is fully live right now.</div></div>
+    </div>`;
 }
 
-// ============================================================
-// QUICK GUIDE
-// ============================================================
-function pageGuide(c){
-  const faqs=[['Where does the data come from?','All data is pulled live from your Google Sheet every time you visit a page. Changes made in the spreadsheet appear here automatically.'],['Why does some data show dashes or look blank?','The spreadsheet uses lookup formulas in many cells. If a formula hasn\'t resolved to a value yet, it may appear blank here. Update the source data in the sheet and it will reflect here.'],['How do I add a new record?','Pages that support adding records — Behavior, Contact Log, Saturday School, and Accountability Log — have a button in the top right corner of each page.'],['Will my added records appear right away?','Yes. After you save, the page automatically reloads the data from your sheet. Your new record should appear at the bottom of the table.'],['Why doesn\'t saving work?','The write connection requires a one-time setup by your Nexaflow administrator. Until then, saving is in demo mode. See the Connected Data Sources page for steps.'],['How do I filter or search?','Each page has a search bar and filter dropdowns above the table. Type to search or select a filter — results update instantly.'],['Can I see a student\'s full profile?','Currently the portal shows all data for each student in the table view. Individual student profile pages are available as an upgrade — contact Nexaflow to add this.'],['Who can add or edit records?','Anyone with the portal link can view and add records right now. Login-protected access with role-based permissions is available as an upgrade.']];
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Quick Guide & FAQ</div><div class="pg-sub">How to navigate and use your LandPage SIS portal</div></div></div>
-    <div class="section-label">How Each Section Works</div>
-    <div class="card" style="margin-bottom:22px">${[['Dashboard','Overview page with total counts from all data and quick-add shortcuts.'],['Student Roster','Full list of all enrolled students. Search by name or ID, filter by grade.'],['Absences','Absence records and makeup time data from the Absences sheet.'],['Tardies','Tardy records with consequence level tracking.'],['Behavior & Conduct','Log and view positive recognitions and conduct referrals.'],['Contact Log','Log and view parent, guardian, and student contacts.'],['Saturday School','Assign and track Saturday school attendance and reasons.'],['Accountability Log','Log student check-in and check-out times. Auto-calculates total hours.'],['STAAR Data','View state assessment scores filtered by mastery level and status.'],['Analytics','Auto-generated campus summary from all connected sheets — no setup needed.']].map(([h,b],i)=>`<div class="guide-step"><div class="guide-num">${i+1}</div><div><div class="guide-head">${h}</div><div class="guide-body">${b}</div></div></div>`).join('')}</div>
-    <div class="section-label">Frequently Asked Questions</div>
-    <div class="card" id="faqCard">${faqs.map(([q,a])=>`<div class="faq-item"><div class="faq-q"><span>${q}</span>${icon(I.chevron,16)}</div><div class="faq-a">${a}</div></div>`).join('')}</div>`;
+// ==============================================================
+//  GUIDE
+// ==============================================================
+function guide(c) {
+  const faqs=[
+    ['Where does the data come from?','All data is pulled live from your Google Sheet each time you visit a page. Any changes made in the spreadsheet automatically appear here on refresh.'],
+    ['Why does some data show dashes or blanks?','The spreadsheet uses lookup formulas in many cells. If a formula has not resolved to a real value yet, it may show as blank here. Updating the source data in the spreadsheet will fix it.'],
+    ['How do I log a new record?','Pages that support adding records — Behavior, Contact Log, Saturday School, and Accountability Log — each have a button in the top right corner. Tap it to open the entry form.'],
+    ['Will saved entries appear right away?','Yes. After saving, the page automatically reloads the data from your sheet. The new record will appear in the table.'],
+    ['Why does the Save button not write to my sheet?','The write connection requires a one-time setup step. Until that is done, saving shows a confirmation but does not write to the sheet. See the Connected Data Sources page for setup steps.'],
+    ['How do I search or filter records?','Every page has a search bar and filter dropdowns above the table. Type to search or select a filter — the table updates immediately.'],
+    ['Can I see a single student's full record across all logs?','Not yet — but this is available as an upgrade. Contact Nexaflow Digital to add individual student profile pages.'],
+    ['How do I change the school name or colors?','Contact the Nexaflow Digital team. Design changes are handled during onboarding or as a support request.'],
+  ];
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Quick Guide &amp; FAQ</div><div class="ph-sub">How to navigate and get the most out of your portal</div></div></div>
+    <div class="sec-label">How Each Section Works</div>
+    <div class="card" style="margin-bottom:20px">${[
+      ['Dashboard','Your main overview. Loads key totals from all data automatically and gives you quick shortcuts to log new entries.'],
+      ['Student Roster','Full list of all enrolled students. Search by name or ID, filter by grade. Absence and tardy counts are color-coded for quick scanning.'],
+      ['Absences','Shows each student\'s total absences, makeup time owed, and time already served.'],
+      ['Tardies','Tardy records with the consequence level for each student clearly labeled.'],
+      ['STAAR Data','Assessment scores filtered by mastery level (Masters, Meets, Approaches, Did Not Meet) and pass/fail status.'],
+      ['Behavior & Conduct','Log and review positive recognitions and conduct referrals. The snapshot at the top shows the positive vs. negative split at a glance.'],
+      ['Contact Log','Log and review all parent and student contacts. Searchable by student ID.'],
+      ['Saturday School','Assign students to Saturday school and track whether they attended. Filter by reason and status.'],
+      ['Accountability Log','Log check-in and check-out times. Total hours are calculated automatically.'],
+      ['Analytics','Auto-built campus summary from all your connected sheets. No setup required.'],
+    ].map(([h,b],i)=>`<div class="guide-step"><div class="g-num">${i+1}</div><div><div class="g-head">${h}</div><div class="g-body">${b}</div></div></div>`).join('')}</div>
+    <div class="sec-label">Frequently Asked Questions</div>
+    <div class="card" id="faqCard">${faqs.map(([q,a])=>`<div class="faq-item"><div class="faq-q"><span>${q}</span>${ic(P.chev,16)}</div><div class="faq-a">${a}</div></div>`).join('')}</div>`;
   document.querySelectorAll('.faq-item').forEach(item=>item.querySelector('.faq-q').addEventListener('click',()=>{const o=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));if(!o)item.classList.add('open');}));
 }
 
-// ============================================================
-// SUPPORT
-// ============================================================
-function pageSupport(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Technical Support</div><div class="pg-sub">Resources and direct support from the Nexaflow Digital team</div></div></div>
-    ${alertBanner('blue','Nexaflow Digital Support','For data connections, design changes, new pages, or anything not working as expected — reach out using any of the options below.')}
-    <div class="g-auto" style="margin-top:20px">${[{icon:I.video,color:'var(--accent)',bg:'var(--accent-lo)',title:'Video Walkthroughs',desc:'Short tutorials covering each section — how to add records, filter data, and read reports.'},{icon:I.mail,color:'var(--teal)',bg:'var(--teal-lo)',title:'Email Support',desc:'Contact support@nexaflowdigital.com. We respond within one business day for active accounts.'},{icon:I.book,color:'var(--green)',bg:'var(--green-lo)',title:'Documentation',desc:'Written guides for every section, for school administrators with no technical knowledge needed.'},{icon:I.phone,color:'var(--amber)',bg:'var(--amber-lo)',title:'Schedule a Call',desc:'Book a 30-minute session with the Nexaflow team for training or setup help.'},{icon:I.chat,color:'var(--purple)',bg:'var(--purple-lo)',title:'Request a Feature',desc:'Need a new page or report? Submit a request and we\'ll follow up to discuss options.'},{icon:I.info,color:'var(--red)',bg:'var(--red-lo)',title:'Report an Issue',desc:'Something not loading correctly? Report it with the page name and what you expected to see.'}].map(s=>`<div class="support-card"><div class="support-icon" style="background:${s.bg};color:${s.color}">${icon(s.icon,20)}</div><h3>${s.title}</h3><p>${s.desc}</p></div>`).join('')}</div>
+// ==============================================================
+//  SUPPORT
+// ==============================================================
+function support(c) {
+  c.innerHTML=`
+    <div class="ph"><div><div class="ph-title">Technical Support</div><div class="ph-sub">Resources and direct support from Nexaflow Digital</div></div></div>
+    ${banner('blue','Nexaflow Digital Support','For data connections, design changes, new pages, or anything not working — reach out using any option below.')}
+    <div class="g-auto" style="margin-top:18px">${[
+      {ico:P.video, col:'var(--blue)',   bg:'var(--blue-lo)',   t:'Video Walkthroughs',  d:'Short tutorials covering each section of the portal — how to log entries, filter data, and read reports.'},
+      {ico:P.mail,  col:'var(--teal)',   bg:'var(--teal-lo)',   t:'Email Support',       d:'Contact support@nexaflowdigital.com. We respond within one business day for all active accounts.'},
+      {ico:P.book,  col:'var(--green)',  bg:'var(--green-lo)',  t:'Documentation',       d:'Written guides for every section, designed for school administrators with no technical knowledge needed.'},
+      {ico:P.phone, col:'var(--amber)',  bg:'var(--amber-lo)',  t:'Schedule a Call',     d:'Book a 30-minute session with the Nexaflow team for live training or setup assistance.'},
+      {ico:P.chat,  col:'var(--purple)', bg:'var(--purple-lo)', t:'Request a Feature',   d:'Need a new page, report, or data view? Submit a request and we will follow up to discuss options.'},
+      {ico:P.info,  col:'var(--red)',    bg:'var(--red-lo)',    t:'Report an Issue',     d:'Something not loading correctly? Report it with the page name and what you expected to see.'},
+    ].map(s=>`<div class="sup-card"><div class="sup-icon" style="background:${s.bg};color:${s.col}">${ic(s.ico,20)}</div><h3>${s.t}</h3><p>${s.d}</p></div>`).join('')}
+    </div>
     <div class="divider"></div>
-    <div class="section-label">Portal Information</div>
-    <div class="card"><div class="card-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:0">${[['Portal Version','v2.0.0'],['Built By','Nexaflow Digital'],['Data Source','Google Sheets (Live)'],['Campus','Lakewood Ridge High'],['Write Access',GAS_URL==='YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'?'Demo Mode':'Connected'],['Support Email','support@nexaflowdigital.com']].map(([k,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)"><span style="font-size:.82rem;color:var(--text-lo)">${k}</span><span style="font-size:.82rem;font-weight:600;color:var(--text-md)">${v}</span></div>`).join('')}</div></div></div>`;
+    <div class="sec-label">Portal Information</div>
+    <div class="card"><div class="card-bd"><div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+      ${[['Portal Version','v3.0.0'],['Built By','Nexaflow Digital'],['Data Source','Google Sheets (Live)'],['Campus','Lakewood Ridge High'],['Write Mode', GAS_URL==='YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'?'Demo Mode':'Connected'],['Support','support@nexaflowdigital.com']].map(([k,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)"><span style="font-size:.8rem;color:var(--tx3)">${k}</span><span style="font-size:.8rem;font-weight:600;color:var(--tx2)">${v}</span></div>`).join('')}
+    </div></div></div>`;
 }
