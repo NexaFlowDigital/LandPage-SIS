@@ -7,7 +7,7 @@
 // ============================================================
 
 const SHEET_ID  = '1nseJo0bqR2GgZtTMlEPYWpdT1x4zJT2DZiGTBaeVl2A';
-const GAS_URL   = 'https://script.google.com/macros/s/AKfycbyEZM1YqZp83jGla8_5nzXoTgRg6FUE8jTa7fSC0FcaQq0UsmjsTVBFOu7smXNuwUWI/exec';
+const GAS_URL   = 'https://script.google.com/macros/s/AKfycbypsBuKjz58aEbJvzQwGfHVFVIka4wfguF9YoOAXiYxpXYJEQQH_zS2fRR-QEQYhtPr/exec';
 
 const TABS = {
   students:       'All Students - Raw Data',
