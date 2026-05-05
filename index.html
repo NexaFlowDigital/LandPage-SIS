@@ -1,136 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>LandPage SIS — School Information Portal</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
 
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <div style="flex-shrink:0">
-        <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
-          <rect width="11" height="11" rx="3" fill="#60B4FF"/>
-          <rect x="15" width="11" height="11" rx="3" fill="#60B4FF" opacity="0.5"/>
-          <rect y="15" width="11" height="11" rx="3" fill="#60B4FF" opacity="0.5"/>
-          <rect x="15" y="15" width="11" height="11" rx="3" fill="#60B4FF"/>
-        </svg>
-      </div>
-      <div>
-        <div class="logo-name">LandPage SIS</div>
-        <div class="logo-tag">by Nexaflow Digital</div>
-      </div>
+<aside class="sidebar" id="sidebar">
+  <div class="s-logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect width="12" height="12" rx="3.5" fill="#60A5FA"/>
+      <rect x="16" width="12" height="12" rx="3.5" fill="#93C5FD" opacity=".6"/>
+      <rect y="16" width="12" height="12" rx="3.5" fill="#93C5FD" opacity=".6"/>
+      <rect x="16" y="16" width="12" height="12" rx="3.5" fill="#60A5FA"/>
+    </svg>
+    <div>
+      <div class="s-logo-name">LandPage SIS</div>
+      <div class="s-logo-tag">by Nexaflow Digital</div>
     </div>
-
-    <div class="school-chip">
-      <div class="school-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </div>
-      <div>
-        <div class="school-name">Lakewood Ridge High</div>
-        <div class="school-id">Campus ID: LRH-001</div>
-      </div>
-    </div>
-
-    <nav class="nav">
-      <div class="nav-group-label">Overview</div>
-      <a class="nav-link active" data-page="dashboard" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-        Dashboard
-      </a>
-
-      <div class="nav-group-label">Academics & Attendance</div>
-      <a class="nav-link" data-page="students" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Student Roster
-      </a>
-      <a class="nav-link" data-page="absences" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        Absences
-      </a>
-      <a class="nav-link" data-page="tardies" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Tardies
-      </a>
-      <a class="nav-link" data-page="staar" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        STAAR Data
-      </a>
-
-      <div class="nav-group-label">Student Support</div>
-      <a class="nav-link" data-page="behavior" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        Behavior & Conduct
-      </a>
-      <a class="nav-link" data-page="contactlog" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 18v-.08z"/></svg>
-        Contact Log
-      </a>
-      <a class="nav-link" data-page="saturdaysch" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/></svg>
-        Saturday School
-      </a>
-      <a class="nav-link" data-page="accountlog" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-        Accountability Log
-      </a>
-
-      <div class="nav-group-label">Reports & Data</div>
-      <a class="nav-link" data-page="analytics" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Analytics & Reports
-      </a>
-      <a class="nav-link" data-page="integrations" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-        Connected Data Sources
-      </a>
-
-      <div class="nav-group-label">Help</div>
-      <a class="nav-link" data-page="guide" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-        Quick Guide & FAQ
-      </a>
-      <a class="nav-link" data-page="support" href="#">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Technical Support
-      </a>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="avatar-sm">AR</div>
-      <div style="flex:1;min-width:0">
-        <div class="footer-name">Admin Rivera</div>
-        <div class="footer-role">Principal</div>
-      </div>
-    </div>
-  </aside>
-
-  <div class="main" id="main">
-    <header class="topbar">
-      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div class="topbar-search">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" placeholder="Search students, staff, reports…" autocomplete="off" />
-      </div>
-      <div class="topbar-right">
-        <div class="topbar-date" id="topDate"></div>
-        <button class="icon-btn notif" title="Notifications">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span class="notif-dot"></span>
-        </button>
-      </div>
-    </header>
-    <div class="page-wrap" id="pageWrap"></div>
   </div>
+  <div class="s-school">
+    <div class="s-school-icon">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div>
+      <div class="s-school-name">Lakewood Ridge High</div>
+      <div class="s-school-id">Campus ID: LRH-001</div>
+    </div>
+  </div>
+  <nav class="s-nav">
+    <div class="s-label">Overview</div>
+    <a class="s-link active" data-page="dashboard" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Dashboard</a>
 
-  <div class="overlay" id="overlay"></div>
-  <script src="app.js"></script>
+    <div class="s-label">Academics &amp; Attendance</div>
+    <a class="s-link" data-page="students" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>Student Roster</a>
+    <a class="s-link" data-page="absences" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Absences</a>
+    <a class="s-link" data-page="tardies" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Tardies</a>
+    <a class="s-link" data-page="staar" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>STAAR Data</a>
+
+    <div class="s-label">Student Support</div>
+    <a class="s-link" data-page="behavior" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Behavior &amp; Conduct</a>
+    <a class="s-link" data-page="contactlog" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/></svg>Contact Log</a>
+    <a class="s-link" data-page="saturdaysch" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/></svg>Saturday School</a>
+    <a class="s-link" data-page="accountlog" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Accountability Log</a>
+
+    <div class="s-label">Reports &amp; Data</div>
+    <a class="s-link" data-page="analytics" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics &amp; Reports</a>
+    <a class="s-link" data-page="integrations" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>Connected Data Sources</a>
+
+    <div class="s-label">Help</div>
+    <a class="s-link" data-page="guide" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Quick Guide &amp; FAQ</a>
+    <a class="s-link" data-page="support" href="#"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Technical Support</a>
+  </nav>
+  <div class="s-foot">
+    <div class="s-avatar">AR</div>
+    <div style="flex:1;min-width:0"><div class="s-fname">Admin Rivera</div><div class="s-frole">Principal</div></div>
+  </div>
+</aside>
+
+<div class="main" id="main">
+  <header class="topbar">
+    <button class="hamburger" id="hamburger">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="t-search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search students, records, reports…" autocomplete="off"/>
+    </div>
+    <div class="t-right">
+      <div class="t-date" id="topDate"></div>
+      <button class="t-btn" title="Notifications"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="ndot"></span></button>
+    </div>
+  </header>
+  <div class="pw" id="pageWrap"></div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<script src="app.js"></script>
 </body>
 </html>
