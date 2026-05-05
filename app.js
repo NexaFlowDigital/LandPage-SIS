@@ -98,12 +98,29 @@ async function fetchSheet(tab) {
 
 // ── POST (write) ─────────────────────────────────────────────
 async function postRow(sheet, row) {
-  if (GAS_URL === 'https://script.google.com/macros/s/AKfycbxVGRXyKIgrtL1M-CNO1BuHGSSl4sCCumC5fa_we2xKPhRrIOH8wLeS6UuAIyAL3Zp0/exec') {
-    await new Promise(r => setTimeout(r, 600));
-    return { status:'ok', demo:true };
+  if (!GAS_URL || GAS_URL.includes('YOUR_APPS_SCRIPT_WEB_APP_URL_HERE')) {
+    throw new Error('Missing Apps Script Web App URL.');
   }
-  const r = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({sheet, row}) });
-  return r.json();
+
+  const r = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ sheet, row })
+  });
+
+  const text = await r.text();
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    throw new Error('Apps Script did not return JSON. Check deployment permissions.');
+  }
+
+  if (!data || data.status !== 'ok') {
+    throw new Error(data?.message || 'Apps Script could not save the row.');
+  }
+
+  return data;
 }
 
 // ── MODAL ────────────────────────────────────────────────────
@@ -285,7 +302,6 @@ function dashboard(c) {
     </div>
   `;
 
-  // Load data
   Promise.all([
     fetchSheet(TABS.students),
     fetchSheet(TABS.behavior),
@@ -294,7 +310,6 @@ function dashboard(c) {
     fetchSheet(TABS.staar),
     fetchSheet(TABS.checkin),
   ]).then(([stu,beh,con,sat,staar,chk]) => {
-    // KPIs
     const passed = staar.rows.filter(r=>String(r['Biology Status']||'')==='Passed').length;
     const kpis = $('d-kpis');
     if (kpis) kpis.innerHTML =
@@ -305,7 +320,6 @@ function dashboard(c) {
       kpi('STAAR Passed', `${passed}/${staar.rows.length}`, 'Biology assessment', 'green', '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>') +
       kpi('Check-Ins', chk.rows.length, 'Accountability log', 'blue', '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>');
 
-    // Behavior snapshot
     const pos = beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('pos'));
     const neg = beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('neg'));
     const snap = $('d-beh-snap');
@@ -324,7 +338,6 @@ function dashboard(c) {
       ${progRow('Negative Referrals',    neg.length, beh.rows.length, 'var(--red)')}
     `;
 
-    // Recent behavior table
     const recent = beh.rows.slice(-8).reverse();
     const btEl = $('d-beh-table');
     if (btEl) btEl.innerHTML = table(recent, [
@@ -743,12 +756,17 @@ function accountlog(c) {
     modal('Log Check-In / Check-Out',`
       <div class="fg"><label>Student ID</label><input class="fi" id="f1" placeholder="e.g. 90000001"/></div>
       <div class="fg"><label>Check-In Date &amp; Time</label><input class="fi" id="f2" type="datetime-local" value="${now}"/></div>
-      <div class="fg"><label>Check-Out Date &amp; Time (leave blank if still checked in)</label><input class="fi" id="f3" type="datetime-local"/></div>
+      <div class="fg"><label>Check-Out Date &amp; Time</label><input class="fi" id="f3" type="datetime-local"/></div>
       <div class="fg"><label>Status</label><select class="fi" id="f4"><option>Checked In</option><option>Checked Out</option></select></div>`,
       async()=>{
-        const inT=$('f2').value, outT=$('f3').value;
-        const hrs=(inT&&outT)?((new Date(outT)-new Date(inT))/3600000).toFixed(2):'';
-        try{await postRow('Accountability Log',[$('f1').value,inT,outT,$('f4').value,hrs]);closeModal();toast('Check-in logged!');loadAcc();}
+        try{
+          const checkIn = $('f2').value;
+          const checkOut = $('f3').value;
+          let total = '';
+          if (checkIn && checkOut) total = ((new Date(checkOut)-new Date(checkIn))/(1000*60*60)).toFixed(2);
+          await postRow('Accountability Log',[$('f1').value,checkIn,checkOut,$('f4').value,total]);
+          closeModal();toast('Accountability entry saved!');loadAcc();
+        }
         catch{toast('Could not save — check Connected Data Sources page.','r');$('mSave').disabled=false;$('mSave').innerHTML=ic(P.plus,14)+' Save Entry';}
       });
   });
@@ -759,68 +777,43 @@ function accountlog(c) {
 // ==============================================================
 function analytics(c) {
   c.innerHTML=`
-    <div class="ph"><div><div class="ph-title">Analytics &amp; Reports</div><div class="ph-sub">Campus-wide summaries built automatically from all your data</div></div>
-    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="navigate('analytics')">${ic(P.ref,14)} Refresh All</button></div></div>
+    <div class="ph"><div><div class="ph-title">Analytics &amp; Reports</div><div class="ph-sub">Campus-wide summaries from all connected data</div></div>
+    <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="navigate('analytics')">${ic(P.ref,14)} Refresh</button></div></div>
     <div class="kpi-grid" id="ana-kpis">${loading()}</div>
-    <div class="g2" style="margin-bottom:16px">
-      <div class="card"><div class="card-hd"><div class="card-title">Behavior Overview</div></div><div class="card-bd" id="ana-beh">${loading()}</div></div>
-      <div class="card"><div class="card-hd"><div class="card-title">STAAR Mastery Levels</div></div><div class="card-bd" id="ana-staar">${loading()}</div></div>
-    </div>
     <div class="g2">
-      <div class="card"><div class="card-hd"><div class="card-title">Saturday School — Reasons</div></div><div class="card-bd" id="ana-sat">${loading()}</div></div>
-      <div class="card"><div class="card-hd"><div class="card-title">Saturday School — Attendance</div></div><div class="card-bd" id="ana-satatt">${loading()}</div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Behavior Balance</div></div><div class="card-bd" id="ana-beh">${loading()}</div></div>
+      <div class="card"><div class="card-hd"><div class="card-title">Saturday School Attendance</div></div><div class="card-bd" id="ana-sat">${loading()}</div></div>
     </div>`;
 
   Promise.all([
     fetchSheet(TABS.students),
     fetchSheet(TABS.behavior),
-    fetchSheet(TABS.saturday),
-    fetchSheet(TABS.staar),
     fetchSheet(TABS.contacts),
+    fetchSheet(TABS.saturday),
     fetchSheet(TABS.checkin),
-  ]).then(([stu,beh,sat,staar,con,chk])=>{
-    const pos=beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('pos'));
-    const neg=beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('neg'));
-    const passed=staar.rows.filter(r=>String(r['Biology Status']||'')==='Passed');
-
+  ]).then(([stu,beh,con,sat,chk])=>{
     $('ana-kpis').innerHTML=
-      kpi('Students',     stu.rows.length, 'Enrolled',         'blue') +
-      kpi('Behavior',     beh.rows.length, 'Total entries',     'purple') +
-      kpi('Recognitions', pos.length,       'Positive entries',  'green') +
-      kpi('Sat. School',  sat.rows.length, 'Assignments',       'amber') +
-      kpi('Contacts',     con.rows.length, 'All contacts',      'teal') +
-      kpi('STAAR Passed', `${passed.length}/${staar.rows.length}`, 'Biology', 'green');
+      kpi('Students', stu.rows.length, 'Current roster', 'blue') +
+      kpi('Behavior Logs', beh.rows.length, 'Total entries', 'purple') +
+      kpi('Contacts', con.rows.length, 'Logged contacts', 'teal') +
+      kpi('Saturday School', sat.rows.length, 'Assignments', 'amber') +
+      kpi('Check-Ins', chk.rows.length, 'Accountability', 'green');
 
-    // Behavior
-    $('ana-beh').innerHTML=
-      progRow('Positive Recognitions', pos.length, beh.rows.length, 'var(--green)') +
-      progRow('Negative Referrals',    neg.length, beh.rows.length, 'var(--red)') +
-      `<div style="margin-top:10px;padding:12px;background:var(--bg);border-radius:var(--rs);text-align:center">
-        <span style="font-size:.8rem;color:var(--tx3)">Positive rate: </span>
-        <span style="font-weight:700;color:var(--green)">${beh.rows.length?Math.round(pos.length/beh.rows.length*100):0}%</span>
-      </div>`;
+    const pos=beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('pos')).length;
+    const neg=beh.rows.filter(r=>String(r[beh.cols[2]]||'').toLowerCase().includes('neg')).length;
+    $('ana-beh').innerHTML=`
+      ${progRow('Positive Entries', pos, beh.rows.length, 'var(--green)')}
+      ${progRow('Negative Entries', neg, beh.rows.length, 'var(--red)')}
+      <div style="margin-top:18px;padding:12px;background:var(--bg);border-radius:var(--rs);font-size:.8rem;color:var(--tx2)">Total behavior entries reviewed: <strong>${beh.rows.length}</strong></div>`;
 
-    // STAAR mastery
-    const levels=['Masters Grade Level','Meets Grade Level','Approaches Grade Level','Did Not Meet'];
-    const colors=['var(--green)','var(--blue)','var(--amber)','var(--red)'];
-    $('ana-staar').innerHTML=levels.map((l,i)=>{
-      const cnt=staar.rows.filter(r=>String(r['Biology Mastery']||'').includes(l.split(' ')[0])).length;
-      return progRow(l,cnt,staar.rows.length,colors[i]);
-    }).join('');
-
-    // Saturday school reasons
-    const reasons={};sat.rows.forEach(r=>{const re=String(r['Reason']||'Other');reasons[re]=(reasons[re]||0)+1;});
-    $('ana-sat').innerHTML=Object.entries(reasons).sort((a,b)=>b[1]-a[1]).map(([r,n])=>progRow(r,n,sat.rows.length,'var(--teal)')).join('')||'<div class="empty">No data.</div>';
-
-    // Saturday attendance
     const att=sat.rows.filter(r=>String(r['Attended']||'').toLowerCase()==='yes').length;
-    $('ana-satatt').innerHTML=`
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-        <div style="text-align:center;padding:18px;background:var(--green-lo);border-radius:var(--rs)">
+    $('ana-sat').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <div style="text-align:center;padding:16px;background:var(--green-lo);border-radius:var(--rs)">
           <div class="big-num" style="color:var(--green)">${att}</div>
           <div class="big-lbl" style="color:var(--green)">Attended</div>
         </div>
-        <div style="text-align:center;padding:18px;background:var(--red-lo);border-radius:var(--rs)">
+        <div style="text-align:center;padding:16px;background:var(--red-lo);border-radius:var(--rs)">
           <div class="big-num" style="color:var(--red)">${sat.rows.length-att}</div>
           <div class="big-lbl" style="color:var(--red)">Did Not Attend</div>
         </div>
@@ -857,7 +850,7 @@ function integrations(c) {
       ['Deploy as a Web App','Click Deploy → New Deployment → Web App. Set "Execute as: Me" and "Who has access: Anyone." Click Deploy and copy the URL.'],
       ['Connect it to the portal','Share the URL with your Nexaflow admin to add it to the portal. All log forms — Behavior, Contact, Saturday School, and Accountability — will then write directly to your Google Sheet.'],
     ].map(([h,b],i)=>`<div class="guide-step"><div class="g-num">${i+1}</div><div><div class="g-head">${h}</div><div class="g-body">${b}</div></div></div>`).join('')}
-    <div style="padding:14px 18px;background:var(--amber-lo);border-top:1px solid var(--border)"><div style="font-size:.8rem;font-weight:700;color:var(--amber);margin-bottom:2px">Currently in Demo Mode</div><div style="font-size:.77rem;color:var(--tx2)">The Save buttons work and show a confirmation, but new entries won't be written to your sheet until the Apps Script is set up. Reading data is fully live right now.</div></div>
+    <div style="padding:14px 18px;background:var(--green-lo);border-top:1px solid var(--border)"><div style="font-size:.8rem;font-weight:700;color:var(--green);margin-bottom:2px">Saving Is Connected</div><div style="font-size:.77rem;color:var(--tx2)">New entries will be sent to your Google Apps Script Web App and added to the connected Google Sheet.</div></div>
     </div>`;
 }
 
@@ -870,9 +863,9 @@ function guide(c) {
     ['Why does some data show dashes or blanks?','The spreadsheet uses lookup formulas in many cells. If a formula has not resolved to a real value yet, it may show as blank here. Updating the source data in the spreadsheet will fix it.'],
     ['How do I log a new record?','Pages that support adding records — Behavior, Contact Log, Saturday School, and Accountability Log — each have a button in the top right corner. Tap it to open the entry form.'],
     ['Will saved entries appear right away?','Yes. After saving, the page automatically reloads the data from your sheet. The new record will appear in the table.'],
-    ['Why does the Save button not write to my sheet?','The write connection requires a one-time setup step. Until that is done, saving shows a confirmation but does not write to the sheet. See the Connected Data Sources page for setup steps.'],
+    ['Why does the Save button not write to my sheet?','The write connection requires a one-time setup step. If saving fails, check the Apps Script deployment settings. See the Connected Data Sources page for setup steps.'],
     ['How do I search or filter records?','Every page has a search bar and filter dropdowns above the table. Type to search or select a filter — the table updates immediately.'],
-    ['Can I see a single student's full record across all logs?','Not yet — but this is available as an upgrade. Contact Nexaflow Digital to add individual student profile pages.'],
+    ['Can I see a single student\'s full record across all logs?','Not yet — but this is available as an upgrade. Contact Nexaflow Digital to add individual student profile pages.'],
     ['How do I change the school name or colors?','Contact the Nexaflow Digital team. Design changes are handled during onboarding or as a support request.'],
   ];
   c.innerHTML=`
