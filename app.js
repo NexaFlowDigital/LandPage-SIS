@@ -10,7 +10,7 @@ const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxVGRXyKIgrtL1M-CNO1Bu
 const TABS = {
   students:  'All Students - Raw Data',
   contacts:  'Contact Log',
-  saturday:  'Saturday School',
+  saturday:  'Accountability Hour',
   checkin:   'Accountability Log',
   behavior:  'Behavior Logs',
   absences:  'Absences',
@@ -193,7 +193,7 @@ function progRow(label, count, total, color) {
 }
 
 // ── ROUTER ───────────────────────────────────────────────────
-const PAGES = { dashboard, students, absences, tardies, staar, behavior, contactlog, saturdaysch, accountlog, analytics, integrations, guide, support };
+const PAGES = { dashboard, students, absences, tardies, staar, behavior, contactlog, sch, accountlog, analytics, integrations, guide, support };
 
 function navigate(key) {
   document.querySelectorAll('.s-link').forEach(el => el.classList.toggle('active', el.dataset.page===key));
@@ -236,7 +236,7 @@ function dashboard(c) {
       ${kpi('Students','…','Enrolled','blue','<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>')}
       ${kpi('Behavior Entries','…','Logged this year','purple','<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>')}
       ${kpi('Contacts Logged','…','Parent & student','teal','<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/>')}
-      ${kpi('Saturday School','…','Assigned this year','amber','<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>')}
+      ${kpi('Accountability Hour','…','Assigned this year','amber','<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>')}
       ${kpi('STAAR Passed','…','Biology','green','<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>')}
       ${kpi('Check-Ins','…','Accountability log','blue','<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>')}
     </div>
@@ -260,7 +260,7 @@ function dashboard(c) {
             ${[
               ['contactlog','b-teal','var(--teal)','Log a Contact','Contact Log'],
               ['behavior','b-purple','var(--purple)','Log Behavior','Behavior & Conduct'],
-              ['saturdaysch','b-amber','var(--amber)','Saturday School','Assign a Student'],
+              ['saturdaysch','b-amber','var(--amber)','Accountability Hour','Assign a Student'],
               ['accountlog','b-blue','var(--blue)','Check-In / Out','Accountability Log'],
             ].map(([pg,badge,col,lbl,sub])=>`
               <button onclick="navigate('${pg}')" style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 13px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;transition:all .15s;text-align:left" onmouseover="this.style.borderColor='${col}';this.style.background='#fff'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg)'">
@@ -291,7 +291,7 @@ function dashboard(c) {
         ['staar',      'green', '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>','STAAR Data','Assessment scores and mastery breakdown'],
         ['behavior',   'purple','<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',                            'Behavior & Conduct','Log and review all conduct entries'],
         ['contactlog', 'teal',  '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.73 19.79 19.79 0 0 1 1.62 5.06 2 2 0 0 1 3.77 3h3a2 2 0 0 1 2 1.72 13.13 13.13 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 10.91a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45 13.13 13.13 0 0 0 2.81.7A2 2 0 0 1 22 18v-.08z"/>','Contact Log','Parent and student contact records'],
-        ['saturdaysch','amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/>','Saturday School','Assignments and attendance confirmations'],
+        ['saturdaysch','amber', '<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M8 18h.01M12 18h.01"/>','Accountability Hour','Assignments and attendance confirmations'],
         ['accountlog', 'blue',  '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>','Accountability Log','Check-in and check-out time records'],
         ['analytics',  'green', '<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>','Analytics & Reports','Campus-wide summaries from all data'],
       ].map(([pg,col,ico,lbl,desc])=>`
