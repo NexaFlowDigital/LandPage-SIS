@@ -657,7 +657,7 @@ function contactlog(c) {
 // ==============================================================
 //  Accountability Hour  (read + add)
 // ==============================================================
-function accountabilityhou(c) {
+function accounthou(c) {
   c.innerHTML=`
     <div class="ph"><div><div class="ph-title">Accountability Hour</div><div class="ph-sub">Assignments, reasons, and attendance confirmations</div></div>
     <div class="ph-acts"><button class="btn btn-ghost btn-sm" onclick="loadSat()">${ic(P.ref,14)} Refresh</button><button class="btn btn-primary btn-sm" id="sat-add">${ic(P.plus,14)} Assign Student</button></div></div>
