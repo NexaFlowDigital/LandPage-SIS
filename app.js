@@ -193,7 +193,7 @@ function progRow(label, count, total, color) {
 }
 
 // ── ROUTER ───────────────────────────────────────────────────
-const PAGES = { dashboard, students, absences, tardies, staar, behavior, contactlog, sch, accountlog, analytics, integrations, guide, support };
+const PAGES = { dashboard, students, absences, tardies, staar, behavior, contactlog, accounthou, accountlog, analytics, integrations, guide, support };
 
 function navigate(key) {
   document.querySelectorAll('.s-link').forEach(el => el.classList.toggle('active', el.dataset.page===key));
