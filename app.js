@@ -185,7 +185,7 @@ function pageDashboard(c){
           ['tardies','b-red','Tardies','Tardy log with consequence levels'],
           ['behavior','b-purple','Behavior & Conduct','Positive and negative behavior entries'],
           ['contactlog','b-teal','Contact Log','Parent and student contact records'],
-          ['saturdaysch','b-green','After School Program','Assignments and attendance tracking'],
+          ['saturdaysch','b-green','Saturday School','Assignments and attendance tracking'],
           ['accountlog','b-blue','Accountability Log','Check-in and check-out records'],
           ['staar','b-green','STAAR Data','State assessment scores and mastery'],
         ].map(([pg,badge,lbl,desc])=>`<a href="#" data-page="${pg}" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:currentColor" class="${badge}"></span><div style="flex:1"><div style="font-weight:600;font-size:.845rem;color:var(--text-hi)">${lbl}</div><div style="font-size:.75rem;color:var(--text-lo);margin-top:1px">${desc}</div></div>${icon('<polyline points="9 18 15 12 9 6"/>',14)}</a>`).join('')}</div>
@@ -194,7 +194,7 @@ function pageDashboard(c){
         <div class="card-head"><div class="card-title">Quick Add</div><span class="badge b-blue">Log an entry</span></div>
         <div class="card-body">
           <p style="font-size:.82rem;color:var(--text-md);margin-bottom:14px">Jump straight to any log form.</p>
-          ${[['contactlog','b-teal','Log a Contact'],['behavior','b-purple','Log Behavior Entry'],['saturdaysch','b-amber','Assign After School Program'],['accountlog','b-blue','Log Check-In/Out']].map(([pg,badge,lbl])=>`<button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:8px;justify-content:flex-start" onclick="navigate('${pg}')"><span style="width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0" class="${badge}"></span>${lbl}</button>`).join('')}
+          ${[['contactlog','b-teal','Log a Contact'],['behavior','b-purple','Log Behavior Entry'],['saturdaysch','b-amber','Assign Saturday School'],['accountlog','b-blue','Log Check-In/Out']].map(([pg,badge,lbl])=>`<button class="btn btn-ghost btn-sm" style="width:100%;margin-bottom:8px;justify-content:flex-start" onclick="navigate('${pg}')"><span style="width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0" class="${badge}"></span>${lbl}</button>`).join('')}
         </div>
       </div>
     </div>
@@ -208,7 +208,7 @@ function pageDashboard(c){
     $('dashStats').innerHTML=
       statCard('Total Students',stu.rows.length,'Enrolled','blue')+
       statCard('Behavior Entries',beh.rows.length,'Total logged','purple')+
-      statCard('After School Program',sat.rows.length,'Assignments','teal')+
+      statCard('Saturday School',sat.rows.length,'Assignments','teal')+
       statCard('Contacts Logged',con.rows.length,'Parent/student contacts','amber')+
       statCard('STAAR Records',staar.rows.length,'Assessment records','green')+
       statCard('Check-Ins Logged',acc.rows.length,'Accountability log','blue');
@@ -329,10 +329,10 @@ function pageContactLog(c){
 // SATURDAY SCHOOL  (read + add)
 // ============================================================
 function pageSaturdaySchool(c){
-  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">After School Program</div><div class="pg-sub">Assignments, reasons, and attendance confirmation</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="satR">${icon(I.refresh,14)} Refresh</button><button class="btn btn-primary btn-sm" id="satA">${icon(I.plus,14)} Assign Student</button></div></div>
+  c.innerHTML=`<div class="pg-head"><div><div class="pg-title">Saturday School</div><div class="pg-sub">Assignments, reasons, and attendance confirmation</div></div><div class="pg-actions"><button class="btn btn-ghost btn-sm" id="satR">${icon(I.refresh,14)} Refresh</button><button class="btn btn-primary btn-sm" id="satA">${icon(I.plus,14)} Assign Student</button></div></div>
     <div id="satStats" class="stat-row">${statCard('…','…','Loading','teal')}</div>
     <div class="card"><div class="card-body" style="padding-bottom:0"><div class="search-row"><div class="search-field">${icon('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',15)}<input type="text" id="satQ" placeholder="Search student ID…"/></div><select class="sel" id="satRsn"><option value="">All Reasons</option><option>Behavior</option><option>Communication Device</option><option>Attendance</option><option>Other</option></select></div></div>
-    <div class="card-head" style="background:var(--bg-card)"><div class="card-title">After School Program Records</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="satT">${loadingHTML()}</div></div>`;
+    <div class="card-head" style="background:var(--bg-card)"><div class="card-title">Saturday School Records</div><span class="badge b-teal">Live · Google Sheets</span></div><div id="satT">${loadingHTML()}</div></div>`;
   let all=[];
   function load(){fetchSheet(TABS.saturdaySchool).then(d=>{all=d.rows;const att=all.filter(r=>String(r['Attended']||'').toLowerCase()==='yes').length;$('satStats').innerHTML=statCard('Total',all.length,'Assignments','teal')+statCard('Attended',att,'Confirmed','green')+statCard('Pending',all.length-att,'Not confirmed','amber');render(all);}).catch(()=>$('satT').innerHTML=errorHTML('Could not load Saturday School data.'));}
   function render(rows){$('satT').innerHTML=renderTable(rows,[{key:'Student ID',label:'Student ID'},{key:'Student Name',label:'Name'},{key:'Grade',label:'Grade'},{key:'Date',label:'Date',fmt:fmtDate},{key:'Reason',label:'Reason'},{key:'Notes',label:'Notes'},{key:'Minutes',label:'Mins'},{key:'Attended',label:'Attended',fmt:v=>{const s=String(v||'—');return`<span class="badge ${s==='Yes'?'b-green':s==='No'?'b-red':'b-amber'}">${s}</span>`;}},{key:'Created By',label:'Assigned By'}]);}
