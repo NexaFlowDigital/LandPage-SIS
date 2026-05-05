@@ -5,7 +5,7 @@
 // ============================================================
 
 const SHEET_ID = '1nseJo0bqR2GgZtTMlEPYWpdT1x4zJT2DZiGTBaeVl2A';
-const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxVGRXyKIgrtL1M-CNO1BuHGSSl4sCCumC5fa_we2xKPhRrIOH8wLeS6UuAIyAL3Zp0/exec';  // paste after deploying Apps Script
+const GAS_URL  = 'https://script.google.com/macros/s/AKfycbxVGRXyKIgrtL1M-CNO1BuHGSSl4sCCumC5fa_we2xKPhRrIOH8wLeS6UuAIyAL3Zp0/exec';
 
 const TABS = {
   students:  'All Students - Raw Data',
