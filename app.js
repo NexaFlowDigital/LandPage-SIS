@@ -927,35 +927,75 @@ function integrations(c) {
 // ==============================================================
 //  GUIDE
 // ==============================================================
+// ==============================================================
+//  GUIDE
+// ==============================================================
 function guide(c) {
   const faqs=[
-    ['Where does the data come from?','All data is pulled live from your Google Sheet each time you visit a page. Any changes made in the spreadsheet automatically appear here on refresh.'],
-    ['Why does some data show dashes or blanks?','The spreadsheet uses lookup formulas in many cells. If a formula has not resolved to a real value yet, it may show as blank here. Updating the source data in the spreadsheet will fix it.'],
-    ['How do I log a new record?','Pages that support adding records — Behavior, Contact Log, Accountability Hour, and Accountability Log — each have a button in the top right corner. Tap it to open the entry form.'],
-    ['Will saved entries appear right away?','Yes. After saving, the page automatically reloads the data from your sheet. The new record will appear in the table.'],
-    ['Why does the Save button not write to my sheet?','The write connection requires a one-time setup step. If saving fails, check the Apps Script deployment settings. See the Connected Data Sources page for setup steps.'],
-    ['How do I search or filter records?','Every page has a search bar and filter dropdowns above the table. Type to search or select a filter — the table updates immediately.'],
-    ['Can I see a single student\'s full record across all logs?','Not yet — but this is available as an upgrade. Contact Nexaflow Digital to add individual student profile pages.'],
-    ['How do I change the school name or colors?','Contact the Nexaflow Digital team. Design changes are handled during onboarding or as a support request.'],
+    ['What is this dashboard used for?','This portal helps school leaders quickly view student information, attendance concerns, behavior records, contact logs, accountability records, and campus-level summaries in one place.'],
+    ['How often does the dashboard update?','The dashboard refreshes each time you open a page or click the refresh button.'],
+    ['Why do some fields show a dash?','A dash means that section does not have information entered for that student or record yet.'],
+    ['How do I search for a student?','Use the search box at the top of the section you are viewing. You can search by student name, student ID, or other available record details depending on the page.'],
+    ['How do I add a new record?','Go to the section you want to update, then click the button in the top right corner to add a new entry.'],
+    ['Will new entries appear right away?','Yes. After saving a new entry, the page refreshes so the new record can appear in the table.'],
+    ['What is Accountability Hour?','Accountability Hour is used to assign and track student attendance for required support time, makeup time, behavior consequences, or other campus expectations.'],
+    ['What is the Accountability Log?','The Accountability Log tracks student check-in and check-out times so staff can review when a student arrived, left, and how much time was completed.'],
+    ['What does the Analytics page show?','The Analytics page gives a quick summary of important campus data, including student totals, behavior logs, contact logs, accountability records, and attendance-related information.'],
+    ['Who should I contact if something looks wrong?','Contact your campus dashboard administrator or technical support contact so the record or setup can be reviewed.']
   ];
+
   c.innerHTML=`
-    <div class="ph"><div><div class="ph-title">Quick Guide &amp; FAQ</div><div class="ph-sub">How to navigate and get the most out of your portal</div></div></div>
+    <div class="ph">
+      <div>
+        <div class="ph-title">Quick Guide &amp; FAQ</div>
+        <div class="ph-sub">Simple answers for using the school information portal</div>
+      </div>
+    </div>
+
     <div class="sec-label">How Each Section Works</div>
-    <div class="card" style="margin-bottom:20px">${[
-      ['Dashboard','Your main overview. Loads key totals from all data automatically and gives you quick shortcuts to log new entries.'],
-      ['Student Roster','Full list of all enrolled students. Search by name or ID, filter by grade. Absence and tardy counts are color-coded for quick scanning.'],
-      ['Absences','Shows each student\'s total absences, makeup time owed, and time already served.'],
-      ['Tardies','Tardy records with the consequence level for each student clearly labeled.'],
-      ['STAAR Data','Assessment scores filtered by mastery level (Masters, Meets, Approaches, Did Not Meet) and pass/fail status.'],
-      ['Behavior & Conduct','Log and review positive recognitions and conduct referrals. The snapshot at the top shows the positive vs. negative split at a glance.'],
-      ['Contact Log','Log and review all parent and student contacts. Searchable by student ID.'],
-      ['Accountability Hour','Assign students to Accountability Hour and track whether they attended. Filter by reason and status.'],
-      ['Accountability Log','Log check-in and check-out times. Total hours are calculated automatically.'],
-      ['Analytics','Auto-built campus summary from all your connected sheets. No setup required.'],
-    ].map(([h,b],i)=>`<div class="guide-step"><div class="g-num">${i+1}</div><div><div class="g-head">${h}</div><div class="g-body">${b}</div></div></div>`).join('')}</div>
+    <div class="card" style="margin-bottom:20px">
+      ${[
+        ['Dashboard','Main overview of key student support, attendance, behavior, and accountability information.'],
+        ['Student Roster','View student information and quickly search by name or student ID.'],
+        ['Absences','Review absence totals, makeup time needs, and related attendance information.'],
+        ['Tardies','Review tardy totals and consequence levels.'],
+        ['STAAR Data','View assessment scores, mastery levels, and student testing status.'],
+        ['Behavior & Conduct','Review positive recognitions and conduct concerns. Add new behavior entries when needed.'],
+        ['Contact Log','Track parent, guardian, and student contact records.'],
+        ['Accountability Hour','Assign students to required support time and track attendance.'],
+        ['Accountability Log','Track student check-in and check-out times.'],
+        ['Analytics & Reports','Review summary information across the portal.']
+      ].map(([h,b],i)=>`
+        <div class="guide-step">
+          <div class="g-num">${i+1}</div>
+          <div>
+            <div class="g-head">${h}</div>
+            <div class="g-body">${b}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
     <div class="sec-label">Frequently Asked Questions</div>
-    <div class="card" id="faqCard">${faqs.map(([q,a])=>`<div class="faq-item"><div class="faq-q"><span>${q}</span>${ic(P.chev,16)}</div><div class="faq-a">${a}</div></div>`).join('')}</div>`;
-  document.querySelectorAll('.faq-item').forEach(item=>item.querySelector('.faq-q').addEventListener('click',()=>{const o=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));if(!o)item.classList.add('open');}));
+    <div class="card" id="faqCard">
+      ${faqs.map(([q,a])=>`
+        <div class="faq-item">
+          <div class="faq-q">
+            <span>${q}</span>
+            ${ic(P.chev,16)}
+          </div>
+          <div class="faq-a">${a}</div>
+        </div>
+      `).join('')}
+    </div>`;
+
+  document.querySelectorAll('.faq-item').forEach(item=>{
+    item.querySelector('.faq-q').addEventListener('click',()=>{
+      const o=item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+      if(!o)item.classList.add('open');
+    });
+  });
 }
 
 // ==============================================================
