@@ -39,8 +39,32 @@ const P = {
 
 function fmtDate(v) {
   if (!v) return '—';
-  try { return new Date(v).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
-  catch { return String(v); }
+
+  const options = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  };
+
+  if (v instanceof Date) {
+    return v.toLocaleDateString('en-US', options);
+  }
+
+  const str = String(v);
+
+  // Handles Google Sheets gviz dates like Date(2025,4,10)
+  const match = str.match(/^Date\((\d+),(\d+),(\d+)\)$/);
+  if (match) {
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    return new Date(year, month, day).toLocaleDateString('en-US', options);
+  }
+
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return str;
+
+  return d.toLocaleDateString('en-US', options);
 }
 function fmtDateTime(v) {
   if (!v) return '—';
