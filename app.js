@@ -850,31 +850,77 @@ function analytics(c) {
 // ==============================================================
 //  CONNECTED DATA SOURCES
 // ==============================================================
+// ==============================================================
+//  SYSTEM STATUS
+// ==============================================================
 function integrations(c) {
   c.innerHTML=`
-    <div class="ph"><div><div class="ph-title">Connected Data Sources</div><div class="ph-sub">Your Google Sheet powers everything in this portal</div></div></div>
-    ${banner('green','Your Google Sheet is connected','All data shown in this portal is pulled live from your spreadsheet. No manual uploads needed — it refreshes every time you visit a page.')}
-    <div class="sec-label" style="margin-top:8px">Your Connected Spreadsheet</div>
-    <div class="card" style="margin-bottom:20px"><div class="card-bd">
-      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">
-        <div style="width:50px;height:50px;background:#E8F5E9;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0">📊</div>
-        <div style="flex:1"><div style="font-weight:700;font-size:.95rem;color:var(--tx1)">Student Data Workbook</div><div style="font-size:.76rem;color:var(--tx3);margin-top:3px">ID: ${SHEET_ID}</div></div>
-        <span class="badge b-green">● Live</span>
+    <div class="ph">
+      <div>
+        <div class="ph-title">System Status</div>
+        <div class="ph-sub">Current portal setup and available data sections</div>
       </div>
-      <div class="divider"></div>
-      <div style="font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--tx4);margin-bottom:10px">Connected Sheet Tabs</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-        ${Object.values(TABS).map(v=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)"><span class="badge b-green" style="padding:2px 6px">●</span><span style="font-size:.82rem;font-weight:500;color:var(--tx1)">${v}</span></div>`).join('')}
+    </div>
+
+    ${banner('green','Portal is active','This dashboard is connected and ready to display student information, attendance records, behavior logs, and support data.')}
+
+    <div class="sec-label" style="margin-top:8px">Active Portal Sections</div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-bd">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+          <div style="width:50px;height:50px;background:var(--blue-lo);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--blue)">
+            ${ic(P.info,24)}
+          </div>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:.95rem;color:var(--tx1)">School Information Portal</div>
+            <div style="font-size:.76rem;color:var(--tx3);margin-top:3px">Live campus dashboard and student support tracking system</div>
+          </div>
+          <span class="badge b-green">Active</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--tx4);margin-bottom:10px">Available Sections</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+          ${[
+            'Student Roster',
+            'Absences',
+            'Tardies',
+            'STAAR Data',
+            'Behavior & Conduct',
+            'Contact Log',
+            'Accountability Hour',
+            'Accountability Log',
+            'Analytics & Reports'
+          ].map(v=>`
+            <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+              <span class="badge b-green" style="padding:2px 6px">●</span>
+              <span style="font-size:.82rem;font-weight:500;color:var(--tx1)">${v}</span>
+            </div>
+          `).join('')}
+        </div>
       </div>
-    </div></div>
-    <div class="sec-label">Enable Saving New Records (One-Time Setup)</div>
-    <div class="card">${[
-      ['Open Google Apps Script','Go to script.google.com and start a new project. Give it a name like "LandPage SIS."'],
-      ['Paste the write script','Copy the script code provided by your Nexaflow administrator and paste it into the editor. Save the file.'],
-      ['Deploy as a Web App','Click Deploy → New Deployment → Web App. Set "Execute as: Me" and "Who has access: Anyone." Click Deploy and copy the URL.'],
-      ['Connect it to the portal','Share the URL with your Nexaflow admin to add it to the portal. All log forms — Behavior, Contact, Accountability Hour, and Accountability — will then write directly to your Google Sheet.'],
-    ].map(([h,b],i)=>`<div class="guide-step"><div class="g-num">${i+1}</div><div><div class="g-head">${h}</div><div class="g-body">${b}</div></div></div>`).join('')}
-    <div style="padding:14px 18px;background:var(--green-lo);border-top:1px solid var(--border)"><div style="font-size:.8rem;font-weight:700;color:var(--green);margin-bottom:2px">Saving Is Connected</div><div style="font-size:.77rem;color:var(--tx2)">New entries will be sent to your Google Apps Script Web App and added to the connected Google Sheet.</div></div>
+    </div>
+
+    <div class="sec-label">Support Information</div>
+    <div class="card">
+      <div class="card-bd">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0">
+          ${[
+            ['Portal Status','Active'],
+            ['Dashboard Type','School Information Portal'],
+            ['Student Records','Available'],
+            ['Attendance Tracking','Available'],
+            ['Behavior Tracking','Available'],
+            ['Support Logs','Available']
+          ].map(([k,v])=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)">
+              <span style="font-size:.8rem;color:var(--tx3)">${k}</span>
+              <span style="font-size:.8rem;font-weight:600;color:var(--tx2)">${v}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
     </div>`;
 }
 
